@@ -5,7 +5,6 @@ import (
 	"github.com/daifiyum/cat-box/subservice/database"
 	"github.com/daifiyum/cat-box/subservice/models"
 	"github.com/daifiyum/cat-box/subservice/parser"
-	"github.com/daifiyum/cat-box/tray"
 	"github.com/daifiyum/cat-box/utils"
 
 	"github.com/robfig/cron/v3"
@@ -26,14 +25,12 @@ func handleUpdate() {
 			}
 			db.Model(&subscription).Where(subscription.ID).Update("data", config)
 			if subscription.Active {
-				if tray.GetIsProxy() {
-					err = singbox.Reload(string(config))
+				if utils.IsProxy {
+					err = singbox.Reload()
 					if err != nil {
 						utils.LogError("Failed to reload configuration")
 						continue
 					}
-				} else {
-					singbox.SaveConfig(string(config))
 				}
 			}
 			utils.LogInfo("Automatic update successful")

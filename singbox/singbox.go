@@ -1,11 +1,9 @@
 package singbox
 
 import (
-	"os"
 	"os/exec"
 	"syscall"
 
-	"github.com/daifiyum/cat-box/config"
 	"github.com/daifiyum/cat-box/utils"
 	"golang.org/x/sys/windows"
 )
@@ -46,12 +44,14 @@ func Start() error {
 	if cmd != nil && isProcessRunning(uint32(cmd.Process.Pid)) {
 		return nil
 	}
-
-	err := CheckConfig()
+	err := GenerateConfig()
 	if err != nil {
 		return err
 	}
-
+	err = CheckConfig()
+	if err != nil {
+		return err
+	}
 	cmd = exec.Command("./resources/core/sing-box.exe", "run", "-c", "./resources/core/config.json")
 	// cmd.Stdout = os.Stdout
 	// cmd.Stderr = os.Stderr
@@ -80,20 +80,8 @@ func Stop() error {
 	return nil
 }
 
-func SaveConfig(data string) error {
-	err := os.WriteFile(config.Config("CONFIG_PATH"), []byte(data), 0666)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func Reload(data string) error {
-	err := SaveConfig(data)
-	if err != nil {
-		return err
-	}
-	err = Stop()
+func Reload() error {
+	err := Stop()
 	if err != nil {
 		return err
 	}

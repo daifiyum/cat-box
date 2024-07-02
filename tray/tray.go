@@ -10,30 +10,6 @@ import (
 	"github.com/energye/systray"
 )
 
-var (
-	IsProxy   bool
-	mSysProxy *systray.MenuItem
-)
-
-func init() {
-	err := utils.SetProcessDPIAware()
-	if err != nil {
-		utils.LogError(err.Error())
-	}
-}
-
-func SetServiceMode() {
-	if mSysProxy.Checked() {
-		singbox.HandleProxyMode()
-	} else {
-		singbox.HandleTunMode()
-	}
-}
-
-func GetIsProxy() bool {
-	return IsProxy
-}
-
 func OpenBrowser(url string) {
 	cmd := exec.Command("cmd", "/c", "start", url)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -55,7 +31,7 @@ func CreateItem() {
 
 	systray.AddSeparator()
 
-	mSysProxy = systray.AddMenuItemCheckbox("系统代理", "System Proxy", true)
+	mSysProxy := systray.AddMenuItemCheckbox("系统代理", "System Proxy", true)
 	mTunMode := systray.AddMenuItemCheckbox("TUN模式", "TUN Mode", false)
 
 	systray.AddSeparator()
@@ -76,6 +52,7 @@ func CreateItem() {
 		if mTunMode.Checked() {
 			mTunMode.Uncheck()
 			mSysProxy.Check()
+			utils.IsTun = false
 		}
 	})
 
@@ -83,6 +60,7 @@ func CreateItem() {
 		if mSysProxy.Checked() {
 			mSysProxy.Uncheck()
 			mTunMode.Check()
+			utils.IsTun = true
 		}
 	})
 
@@ -97,7 +75,7 @@ func InitTray() {
 	systray.SetTooltip("cat-box")
 
 	systray.SetOnClick(func(menu systray.IMenu) {
-		if IsProxy {
+		if utils.IsProxy {
 			err := singbox.Stop()
 			if err != nil {
 				utils.LogError("Failed to stop sing-box")
@@ -105,16 +83,15 @@ func InitTray() {
 			}
 			singbox.DisableProxy()
 			systray.SetIcon(AppIcon)
-			IsProxy = false
+			utils.IsProxy = false
 		} else {
-			SetServiceMode()
 			err := singbox.Start()
 			if err != nil {
 				utils.LogError("Failed to start sing-box")
 				return
 			}
 			systray.SetIcon(ProxyIcon)
-			IsProxy = true
+			utils.IsProxy = true
 		}
 	})
 

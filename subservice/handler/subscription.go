@@ -8,7 +8,6 @@ import (
 	"github.com/daifiyum/cat-box/subservice/parser"
 
 	"github.com/daifiyum/cat-box/singbox"
-	"github.com/daifiyum/cat-box/tray"
 	"github.com/daifiyum/cat-box/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -73,6 +72,8 @@ func OperateSubscribe(c *fiber.Ctx) error {
 	db := database.DB
 	subscribe := new(models.Subscriptions)
 	db.First(subscribe, id)
+
+	// 手动更新
 	if update == "1" {
 		res, err := parser.Handler(subscribe.Link)
 		if err != nil {
@@ -81,35 +82,29 @@ func OperateSubscribe(c *fiber.Ctx) error {
 		subscribe.Data = string(res)
 		db.Save(subscribe)
 		if subscribe.Active {
-			if tray.GetIsProxy() {
-				err := singbox.Reload(subscribe.Data)
+			if utils.IsProxy {
+				err := singbox.Reload()
 				if err != nil {
 					utils.LogError("Failed to reload sing-box")
-				}
-			} else {
-				err := singbox.SaveConfig(subscribe.Data)
-				if err != nil {
-					utils.LogError("Failed to save config")
 				}
 			}
 		}
 		return c.JSON(fiber.Map{"status": "success", "message": "Subscribe successfully updated", "data": nil})
 	}
+
+	// 自动更新
 	if sw_update == "1" {
 		subscribe.AutoUpdate = auto_update
 		db.Save(subscribe)
 		return c.JSON(fiber.Map{"status": "success", "message": "Enable auto update", "data": nil})
 	}
+
+	// 激活订阅（选中订阅）
 	db.Exec("UPDATE subscriptions SET active = CASE WHEN id = ? THEN 1 ELSE 0 END", id)
-	if tray.GetIsProxy() {
-		err := singbox.Reload(subscribe.Data)
+	if utils.IsProxy {
+		err := singbox.Reload()
 		if err != nil {
 			utils.LogError("Failed to reload sing-box")
-		}
-	} else {
-		err := singbox.SaveConfig(subscribe.Data)
-		if err != nil {
-			utils.LogError("Failed to save config")
 		}
 	}
 	return c.JSON(fiber.Map{"status": "success", "message": "Subscribe successfully active", "data": nil})

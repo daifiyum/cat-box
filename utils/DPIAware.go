@@ -10,10 +10,17 @@ var (
 	procSetProcessDPIAware = moduser32.NewProc("SetProcessDPIAware")
 )
 
-func SetProcessDPIAware() error {
+func setProcessDPIAware() error {
 	status, r, err := procSetProcessDPIAware.Call()
 	if status == 0 {
 		return fmt.Errorf("SetProcessDPIAware failed %d: %v %v", status, r, err)
 	}
 	return nil
+}
+
+func init() {
+	err := setProcessDPIAware()
+	if err != nil {
+		LogError(err.Error())
+	}
 }
