@@ -58,8 +58,8 @@ func RegisterToast(id, name, path string) error {
 	return nil
 }
 
-// APPID 注册 以显示通知图标和名称
-func init() {
+// APPID 注册, 以显示通知图标和名称
+func InitToast() {
 	toastIcon, _ := filepath.Abs("./resources/icons/box.ico")
 	err := RegisterToast("cat-box", "cat-box", toastIcon)
 	if err != nil {

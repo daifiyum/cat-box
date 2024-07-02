@@ -10,7 +10,7 @@ var (
 	SubIcon   []byte
 )
 
-func init() {
+func InitIcons() {
 	AppIcon, _ = os.ReadFile("resources/icons/box.ico")
 	CloseIcon, _ = os.ReadFile("resources/icons/close.ico")
 	HomeIcon, _ = os.ReadFile("resources/icons/home.ico")

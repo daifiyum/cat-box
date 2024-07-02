@@ -70,6 +70,8 @@ func CreateItem() {
 }
 
 func InitTray() {
+	InitIcons()
+
 	systray.SetIcon(AppIcon)
 	systray.SetTitle("cat-box")
 	systray.SetTooltip("cat-box")
