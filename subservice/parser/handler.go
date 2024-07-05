@@ -3,99 +3,96 @@ package parser
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"io"
+	"net/http"
 	"os"
-	"regexp"
 	"strings"
 
-	"github.com/gofiber/fiber/v2/log"
+	"github.com/daifiyum/cat-box/utils"
 	"github.com/hiddify/ray2sing/ray2sing"
-	"github.com/valyala/fasthttp"
 )
 
 func fetchSubscribe(url string) ([]byte, error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-
-	req.SetRequestURI(url)
-
-	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseResponse(resp)
-
-	if err := fasthttp.Do(req, resp); err != nil {
+	resp, err := http.Get(url)
+	if err != nil {
 		return nil, err
 	}
-	return resp.Body(), nil
-}
+	defer resp.Body.Close()
 
-func decodeSubscribe(body []byte) ([]string, error) {
-	decodedBody, err := base64.StdEncoding.DecodeString(string(body))
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	bodyStr := string(decodedBody)
-	regex := regexp.MustCompile(`(ss|vmess|trojan|vless|hysteria|hysteria2)://([^\s]+)`)
-	matches := regex.FindAllStringSubmatch(bodyStr, -1)
-
-	var nodes []string
-	for _, match := range matches {
-		if len(match) >= 1 {
-			nodes = append(nodes, match[0])
-		}
+	decodedBody, err := base64.URLEncoding.DecodeString(string(body))
+	if err != nil {
+		return nil, err
 	}
-
-	return nodes, nil
+	return decodedBody, nil
 }
 
-func parseSubscribe(links []string) ([]map[string]interface{}, error) {
+func convertSubscribe(data []byte) ([]map[string]interface{}, error) {
+	content := string(data)
+	arr := strings.Split(content, "\n")
 	var outbounds []map[string]interface{}
-	for _, link := range links {
-		prot := strings.Split(link, "://")
-
-		switch prot[0] {
+	for _, line := range arr {
+		line = strings.TrimRight(line, " \r")
+		if line == "" {
+			continue
+		}
+		scheme, _, found := strings.Cut(line, "://")
+		if !found {
+			continue
+		}
+		scheme = strings.ToLower(scheme)
+		switch scheme {
 		case "ss":
-			node, err := ray2sing.ShadowsocksSingbox(link)
+			node, err := ray2sing.ShadowsocksSingbox(line)
 			if err != nil {
-				return nil, err
+				continue
 			}
 			mapNode, _ := StructToMap(node)
 			outbounds = append(outbounds, mapNode)
 		case "vmess":
-			node, err := ray2sing.VmessSingbox(link)
+			node, err := ray2sing.VmessSingbox(line)
 			if err != nil {
-				return nil, err
+				continue
 			}
 			mapNode, _ := StructToMap(node)
 			outbounds = append(outbounds, mapNode)
 		case "trojan":
-			node, err := ray2sing.TrojanSingbox(link)
+			node, err := ray2sing.TrojanSingbox(line)
 			if err != nil {
-				return nil, err
+				continue
 			}
 			mapNode, _ := StructToMap(node)
 			outbounds = append(outbounds, mapNode)
 		case "vless":
-			node, err := ray2sing.VlessSingbox(link)
+			node, err := ray2sing.VlessSingbox(line)
 			if err != nil {
-				return nil, err
+				continue
 			}
 			mapNode, _ := StructToMap(node)
 			outbounds = append(outbounds, mapNode)
 		case "hysteria":
-			node, err := ray2sing.HysteriaSingbox(link)
+			node, err := ray2sing.HysteriaSingbox(line)
 			if err != nil {
-				return nil, err
+				continue
 			}
 			mapNode, _ := StructToMap(node)
 			outbounds = append(outbounds, mapNode)
 		case "hysteria2":
-			node, err := ray2sing.Hysteria2Singbox(link)
+			node, err := ray2sing.Hysteria2Singbox(line)
 			if err != nil {
-				return nil, err
+				continue
 			}
 			mapNode, _ := StructToMap(node)
 			outbounds = append(outbounds, mapNode)
 		}
+	}
+	if len(outbounds) <= 0 {
+		return nil, errors.New("no content")
 	}
 	return outbounds, nil
 }
@@ -117,15 +114,12 @@ func StructToMap(obj interface{}) (map[string]interface{}, error) {
 func Handler(url string) ([]byte, error) {
 	req, err := fetchSubscribe(url)
 	if err != nil {
+		utils.LogError("fetchSubscribe errors")
 		return nil, err
 	}
-	nodes, err := decodeSubscribe(req)
+	outbounds, err := convertSubscribe(req)
 	if err != nil {
-		return nil, err
-	}
-	outbounds, err := parseSubscribe(nodes)
-	if err != nil {
-		log.Error("parseSubscribe error:", err)
+		utils.LogError("convertSubscribe error")
 		return nil, err
 	}
 	template, err := os.ReadFile("./resources/template/template.json")
