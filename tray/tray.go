@@ -83,10 +83,16 @@ func InitTray() {
 				utils.LogError("Failed to stop sing-box")
 				return
 			}
-			singbox.DisableProxy()
+			utils.DisableProxy()
 			systray.SetIcon(AppIcon)
 			utils.IsProxy = false
 		} else {
+			if utils.IsTun {
+				if !utils.IsAdmin() {
+					utils.ShowToast("cat-box", "警告", "开启Tun模式需以管理员模式运行！")
+					return
+				}
+			}
 			err := singbox.Start()
 			if err != nil {
 				utils.LogError("Failed to start sing-box")
