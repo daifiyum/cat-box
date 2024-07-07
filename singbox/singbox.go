@@ -5,7 +5,6 @@ import (
 	"syscall"
 
 	"github.com/daifiyum/cat-box/utils"
-	"golang.org/x/sys/windows"
 )
 
 var (
@@ -24,24 +23,8 @@ func CheckConfig() error {
 	return nil
 }
 
-func isProcessRunning(pid uint32) bool {
-	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION, false, pid)
-	if err != nil {
-		return false
-	}
-	defer windows.CloseHandle(handle)
-
-	var exitCode uint32
-	err = windows.GetExitCodeProcess(handle, &exitCode)
-	if err != nil {
-		return false
-	}
-
-	return exitCode == 259
-}
-
 func Start() error {
-	if cmd != nil && isProcessRunning(uint32(cmd.Process.Pid)) {
+	if cmd != nil {
 		return nil
 	}
 	err := GenerateConfig()
@@ -70,12 +53,13 @@ func Stop() error {
 		return nil
 	}
 
-	if isProcessRunning(uint32(cmd.Process.Pid)) {
-		err := cmd.Process.Signal(syscall.SIGKILL)
-		if err != nil {
-			return err
-		}
+	err := cmd.Process.Kill()
+	if err != nil {
+		return err
 	}
+
+	cmd.Wait()
+
 	cmd = nil
 	return nil
 }
