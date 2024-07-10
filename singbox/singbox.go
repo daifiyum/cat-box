@@ -2,6 +2,7 @@ package singbox
 
 import (
 	"os/exec"
+	runtimeDebug "runtime/debug"
 	"syscall"
 
 	"github.com/daifiyum/cat-box/utils"
@@ -12,9 +13,9 @@ var (
 )
 
 func CheckConfig() error {
-	cmd := exec.Command("./resources/core/sing-box.exe", "check", "-c", "./resources/core/config.json")
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	output, err := cmd.CombinedOutput()
+	cmdcheck := exec.Command("./resources/core/sing-box.exe", "check", "-c", "./resources/core/config.json")
+	cmdcheck.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	output, err := cmdcheck.CombinedOutput()
 	if err != nil {
 		output = output[21:]
 		utils.ShowToast("cat-box", "错误", string(output))
@@ -27,6 +28,7 @@ func Start() error {
 	if cmd != nil {
 		return nil
 	}
+	runtimeDebug.FreeOSMemory()
 	err := GenerateConfig()
 	if err != nil {
 		return err
@@ -45,6 +47,7 @@ func Start() error {
 	if err != nil {
 		return err
 	}
+	runtimeDebug.FreeOSMemory()
 	return nil
 }
 

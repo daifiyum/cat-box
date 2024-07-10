@@ -26,7 +26,7 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-# 删除符号链接，清理中间文件
+# 清理中间文件
 Remove-Item ..\cat-box.syso
 
 # 复制资源文件到输出目录

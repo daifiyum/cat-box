@@ -12,7 +12,6 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sagernet/sing v0.4.1
-	github.com/valyala/fasthttp v1.54.0
 	golang.org/x/crypto v0.23.0
 	golang.org/x/sys v0.21.0
 	gorm.io/gorm v1.25.10
@@ -38,6 +37,7 @@ require (
 	github.com/sagernet/sing-dns v0.1.12 // indirect
 	github.com/tevino/abool v0.0.0-20220530134649-2bfc934cb23c // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.54.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
 	golang.org/x/mod v0.14.0 // indirect

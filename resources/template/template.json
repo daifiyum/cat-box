@@ -83,6 +83,11 @@
       ]
     },
     {
+      "tag": "openai",
+      "type": "selector",
+      "outbounds": []
+    },
+    {
       "tag": "auto",
       "type": "urltest",
       "outbounds": [],
@@ -126,6 +131,10 @@
         "outbound": "direct"
       },
       {
+        "rule_set": "openai",
+        "outbound": "openai"
+      },
+      {
         "ip_is_private": true,
         "outbound": "direct"
       }
@@ -142,6 +151,12 @@
         "type": "local",
         "format": "binary",
         "path": "resources/geo/geosite-cn.srs"
+      },
+      {
+        "tag": "openai",
+        "type": "local",
+        "format": "binary",
+        "path": "resources/geo/openai.srs"
       }
     ],
     "auto_detect_interface": true,

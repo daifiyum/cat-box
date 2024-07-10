@@ -1,0 +1,3 @@
+geoip-cn: https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs
+geosite-cn: https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-cn.srs
+openai: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs

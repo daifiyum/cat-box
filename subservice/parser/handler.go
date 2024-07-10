@@ -132,7 +132,7 @@ func Handler(url string) ([]byte, error) {
 	// add tag
 	for _, i := range mapTemplate["outbounds"].([]interface{}) {
 		m, _ := i.(map[string]interface{})
-		if m["tag"] == "proxy" || m["tag"] == "auto" {
+		if m["type"] == "selector" || m["type"] == "urltest" {
 			for _, f := range outbounds {
 				m["outbounds"] = append(m["outbounds"].([]interface{}), f["tag"])
 			}
