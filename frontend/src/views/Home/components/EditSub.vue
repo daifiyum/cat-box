@@ -33,7 +33,6 @@
           color="primary"
           hide-details
           inset
-          @update:modelValue="setAutoUpdate(item.id)"
         ></v-switch>
       </v-card-text>
 
@@ -73,7 +72,7 @@
 
 <script setup>
 import { ref, reactive, computed } from "vue";
-import { rm_sub, rw_sub, up_sub, sw_sub, auto_sub } from "@/api/home";
+import { rm_sub, rw_sub, up_sub } from "@/api/home";
 import emitter from "@/utils/emitter";
 
 const { item } = defineProps(["item"]);
@@ -100,22 +99,19 @@ async function rmOne(id) {
 }
 
 async function rwOne(id) {
-  await rw_sub(id, { name: subName.value, link: subLink.value });
+  await rw_sub(id, {
+    name: subName.value,
+    link: subLink.value,
+    auto_update: autoUpdateToNum.value,
+  });
   emitter.emit("reloadData");
   dialog.value = false;
 }
 
 async function upOne(id) {
   loading.value = true;
-  await up_sub(id, { update: 1 });
-  // if (item.active) {
-  //   await sw_sub(item.id);
-  // }
+  await up_sub(id);
   loading.value = false;
-}
-
-async function setAutoUpdate(id) {
-  await auto_sub(id, { auto_update: autoUpdateToNum.value });
 }
 </script>
 

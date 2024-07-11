@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -25,7 +25,7 @@ func fetchSubscribe(url string) ([]byte, error) {
 		return nil, err
 	}
 
-	decodedBody, err := base64.URLEncoding.DecodeString(string(body))
+	decodedBody, err := DecodeBase64URLSafe(string(body))
 	if err != nil {
 		return nil, err
 	}
@@ -112,11 +112,24 @@ func StructToMap(obj interface{}) (map[string]interface{}, error) {
 }
 
 func Handler(url string) ([]byte, error) {
-	req, err := fetchSubscribe(url)
-	if err != nil {
-		utils.LogError("fetchSubscribe errors")
-		return nil, err
+	var req []byte
+	if utils.IsProxy {
+		reqin, err := ProxyHttp(url)
+		if err != nil {
+			fmt.Println(err)
+			utils.LogError("fetchSubscribe errors")
+			return nil, err
+		}
+		req = reqin
+	} else {
+		reqin, err := fetchSubscribe(url)
+		if err != nil {
+			utils.LogError("fetchSubscribe errors")
+			return nil, err
+		}
+		req = reqin
 	}
+
 	outbounds, err := convertSubscribe(req)
 	if err != nil {
 		utils.LogError("convertSubscribe error")

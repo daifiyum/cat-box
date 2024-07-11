@@ -18,7 +18,7 @@ func ConnectDB() error {
 	}
 
 	// migrate database
-	DB.AutoMigrate(&models.Subscriptions{}, &models.Users{}, &models.Options{})
+	DB.AutoMigrate(&models.Subscriptions{}, &models.Options{})
 
 	// create default options if not exists
 	options := models.Options{}

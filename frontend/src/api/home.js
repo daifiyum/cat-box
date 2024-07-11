@@ -32,7 +32,7 @@ export function rm_sub(id) {
 export function rw_sub(id, data) {
   return service({
     method: "PUT",
-    url: `/subscribe/${id}`,
+    url: `/subscribe/${id}/edit`,
     data,
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -41,31 +41,17 @@ export function rw_sub(id, data) {
 }
 
 // 更新订阅
-export function up_sub(id, queryParams = {}) {
+export function up_sub(id) {
   return service({
-    method: "PATCH",
-    url: `/subscribe/${id}`,
-    params: queryParams,
+    method: "PUT",
+    url: `/subscribe/${id}/update`,
   });
 }
 
-// 自动更新
-export function auto_sub(id, data) {
-  return service({
-    method: "PATCH",
-    url: `/subscribe/${id}`,
-    params: { sw_update: "1" },
-    data,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-  });
-}
-
-// 切换订阅
+// 激活订阅
 export function sw_sub(id) {
   return service({
-    method: "PATCH",
-    url: `/subscribe/${id}`,
+    method: "PUT",
+    url: `/subscribe/${id}/active`,
   });
 }
