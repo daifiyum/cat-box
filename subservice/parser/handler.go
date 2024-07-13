@@ -3,34 +3,12 @@ package parser
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/daifiyum/cat-box/utils"
 	"github.com/hiddify/ray2sing/ray2sing"
 )
-
-func fetchSubscribe(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	decodedBody, err := DecodeBase64URLSafe(string(body))
-	if err != nil {
-		return nil, err
-	}
-	return decodedBody, nil
-}
 
 func convertSubscribe(data []byte) ([]map[string]interface{}, error) {
 	content := string(data)
@@ -97,37 +75,12 @@ func convertSubscribe(data []byte) ([]map[string]interface{}, error) {
 	return outbounds, nil
 }
 
-func StructToMap(obj interface{}) (map[string]interface{}, error) {
-	jsonBytes, err := json.Marshal(obj)
-	if err != nil {
-		return nil, err
-	}
-
-	var result map[string]interface{}
-	err = json.Unmarshal(jsonBytes, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
 func Handler(url string) ([]byte, error) {
-	var req []byte
-	if utils.IsProxy {
-		reqin, err := ProxyHttp(url)
-		if err != nil {
-			fmt.Println(err)
-			utils.LogError("fetchSubscribe errors")
-			return nil, err
-		}
-		req = reqin
-	} else {
-		reqin, err := fetchSubscribe(url)
-		if err != nil {
-			utils.LogError("fetchSubscribe errors")
-			return nil, err
-		}
-		req = reqin
+
+	req, err := FetchSubscribe(url)
+	if err != nil {
+		utils.LogError("fetchSubscribe errors")
+		return nil, err
 	}
 
 	outbounds, err := convertSubscribe(req)
