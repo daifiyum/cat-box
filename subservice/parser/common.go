@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,7 +29,11 @@ func DecodeBase64URLSafe(content string) ([]byte, error) {
 func FetchSubscribe(suburl string) ([]byte, error) {
 	var client *http.Client
 	if utils.IsProxy {
-		proxyURI, err := url.Parse("socks5://127.0.0.1:8888")
+		mixedPort, err := GetMixedPort()
+		if err != nil {
+			return nil, err
+		}
+		proxyURI, err := url.Parse("socks5://127.0.0.1:" + mixedPort)
 		if err != nil {
 			return nil, err
 		}
@@ -83,4 +89,26 @@ func StructToMap(obj interface{}) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func GetMixedPort() (string, error) {
+	template, err := os.ReadFile("./resources/template/template.json")
+	if err != nil {
+		return "", err
+	}
+	mapTemplate := make(map[string]interface{})
+	if err := json.Unmarshal(template, &mapTemplate); err != nil {
+		return "", err
+	}
+
+	var MixedPort string
+	for _, i := range mapTemplate["inbounds"].([]interface{}) {
+		m, _ := i.(map[string]interface{})
+
+		if m["type"] == "mixed" {
+			v := m["listen_port"].(float64)
+			MixedPort = strconv.Itoa(int(v))
+		}
+	}
+	return MixedPort, nil
 }
