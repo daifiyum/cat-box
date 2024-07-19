@@ -68,7 +68,7 @@ func ActiveSubscribe(c *fiber.Ctx) error {
 	// 激活订阅（选中订阅）
 	db.Exec("UPDATE subscriptions SET active = CASE WHEN id = ? THEN 1 ELSE 0 END", id)
 	if utils.IsProxy {
-		err := singbox.Reload()
+		err := singbox.Start()
 		if err != nil {
 			utils.LogError("Failed to reload sing-box")
 		}
@@ -90,7 +90,7 @@ func UpdateSubscribe(c *fiber.Ctx) error {
 	db.Save(subscribe)
 	if subscribe.Active {
 		if utils.IsProxy {
-			err := singbox.Reload()
+			err := singbox.Start()
 			if err != nil {
 				utils.LogError("Failed to reload sing-box")
 			}

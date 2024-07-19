@@ -26,7 +26,7 @@ func handleUpdate() {
 			db.Model(&subscription).Where(subscription.ID).Update("data", config)
 			if subscription.Active {
 				if utils.IsProxy {
-					err = singbox.Reload()
+					err = singbox.Start()
 					if err != nil {
 						utils.LogError("Failed to reload configuration")
 						continue

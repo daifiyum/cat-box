@@ -20,5 +20,4 @@ func onReady() {
 
 func onExit() {
 	singbox.Stop()
-	utils.DisableProxy()
 }

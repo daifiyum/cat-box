@@ -2,14 +2,16 @@ package singbox
 
 import (
 	"os/exec"
-	runtimeDebug "runtime/debug"
+	"sync"
 	"syscall"
 
 	"github.com/daifiyum/cat-box/utils"
+	"golang.org/x/sys/windows"
 )
 
 var (
-	cmd *exec.Cmd
+	cmd          *exec.Cmd
+	closeCoreMux sync.Mutex
 )
 
 func CheckConfig() error {
@@ -25,11 +27,12 @@ func CheckConfig() error {
 }
 
 func Start() error {
-	if cmd != nil {
-		return nil
+	err := Stop()
+	if err != nil {
+		return err
 	}
-	runtimeDebug.FreeOSMemory()
-	err := GenerateConfig()
+
+	err = GenerateConfig()
 	if err != nil {
 		return err
 	}
@@ -37,44 +40,46 @@ func Start() error {
 	if err != nil {
 		return err
 	}
+
 	cmd = exec.Command("./resources/core/sing-box.exe", "run", "-c", "./resources/core/config.json")
-	// cmd.Stdout = os.Stdout
-	// cmd.Stderr = os.Stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		HideWindow: true,
+		CreationFlags: windows.CREATE_UNICODE_ENVIRONMENT | windows.CREATE_NEW_PROCESS_GROUP,
+		HideWindow:    true,
 	}
 	err = cmd.Start()
 	if err != nil {
 		return err
 	}
-	runtimeDebug.FreeOSMemory()
+
 	return nil
 }
 
 func Stop() error {
-	if cmd == nil {
+	closeCoreMux.Lock()
+	defer closeCoreMux.Unlock()
+
+	if cmd == nil || cmd.ProcessState != nil && cmd.ProcessState.Exited() {
 		return nil
 	}
 
-	err := cmd.Process.Kill()
+	err := terminateProc(cmd.Process.Pid)
 	if err != nil {
 		return err
 	}
 
-	cmd.Wait()
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
 
 	cmd = nil
 	return nil
 }
 
-func Reload() error {
-	err := Stop()
-	if err != nil {
-		return err
+func CheckCoreStatus() {
+	if cmd == nil || cmd.ProcessState != nil && cmd.ProcessState.Exited() {
+		utils.IsProxy = false
+	} else {
+		utils.IsProxy = true
 	}
-	err = Start()
-	if err != nil {
-		return err
-	}
-	return nil
 }

@@ -80,12 +80,10 @@ func InitTray() {
 		if utils.IsProxy {
 			err := singbox.Stop()
 			if err != nil {
-				utils.LogError("Failed to stop sing-box")
+				utils.LogError("Failed to start sing-box")
 				return
 			}
-			utils.DisableProxy()
 			systray.SetIcon(AppIcon)
-			utils.IsProxy = false
 		} else {
 			if utils.IsTun {
 				if !utils.IsAdmin() {
@@ -99,8 +97,9 @@ func InitTray() {
 				return
 			}
 			systray.SetIcon(ProxyIcon)
-			utils.IsProxy = true
+
 		}
+		singbox.CheckCoreStatus()
 	})
 
 	CreateItem()
