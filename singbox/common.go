@@ -49,15 +49,13 @@ func terminateProc(pid int) error {
 
 func getConfig() string {
 	db := database.DB
-	var subscriptions []models.Subscriptions
-	db.Find(&subscriptions)
+	var subscriptions models.Subscriptions
+	result := db.Where("active = ?", true).First(&subscriptions)
 
-	for _, subscription := range subscriptions {
-		if subscription.Active {
-			return subscription.Data
-		}
+	if result.Error != nil {
+		return ""
 	}
-	return ""
+	return subscriptions.Data
 }
 
 func GenerateConfig() error {
