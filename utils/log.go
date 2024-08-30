@@ -3,8 +3,6 @@ package utils
 import (
 	"log"
 	"os"
-
-	"github.com/daifiyum/cat-box/config"
 )
 
 var (
@@ -16,7 +14,7 @@ var (
 func InitLog() {
 	var err error
 
-	logFile, err = os.OpenFile(config.Config("LOG_PATH"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err = os.OpenFile("./app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("failed to open log file: %v", err)
 	}

@@ -7,9 +7,7 @@ require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/hiddify/ray2sing v0.0.0-20240620091605-2d6d49ad762d
-	github.com/joho/godotenv v1.5.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sagernet/sing v0.4.1
 	golang.org/x/net v0.23.0
 	golang.org/x/sys v0.21.0
 	gorm.io/gorm v1.25.10
@@ -30,6 +28,7 @@ require (
 	github.com/miekg/dns v1.1.58 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/sagernet/sing v0.4.1 // indirect
 	github.com/sagernet/sing-box v1.8.9 // indirect
 	github.com/sagernet/sing-dns v0.1.12 // indirect
 	github.com/tevino/abool v0.0.0-20220530134649-2bfc934cb23c // indirect
