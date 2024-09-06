@@ -77,14 +77,9 @@ func FetchSubscribe(suburl string) ([]byte, error) {
 }
 
 // 转换数据
-func StructToMap(obj interface{}) (map[string]interface{}, error) {
-	jsonBytes, err := json.Marshal(obj)
-	if err != nil {
-		return nil, err
-	}
-
+func StringToMap(data string) (map[string]interface{}, error) {
 	var result map[string]interface{}
-	err = json.Unmarshal(jsonBytes, &result)
+	err := json.Unmarshal([]byte(data), &result)
 	if err != nil {
 		return nil, err
 	}

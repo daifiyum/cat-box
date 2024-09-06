@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
+	C "github.com/daifiyum/cat-box/converter"
 	"github.com/daifiyum/cat-box/utils"
-	"github.com/hiddify/ray2sing/ray2sing"
 )
 
 func convertSubscribe(data []byte) ([]map[string]interface{}, error) {
@@ -19,55 +19,14 @@ func convertSubscribe(data []byte) ([]map[string]interface{}, error) {
 		if line == "" {
 			continue
 		}
-		scheme, _, found := strings.Cut(line, "://")
-		if !found {
+
+		node, err := C.ConvertCProxyToJson(line)
+		if err != nil {
 			continue
 		}
-		scheme = strings.ToLower(scheme)
-		switch scheme {
-		case "ss":
-			node, err := ray2sing.ShadowsocksSingbox(line)
-			if err != nil {
-				continue
-			}
-			mapNode, _ := StructToMap(node)
-			outbounds = append(outbounds, mapNode)
-		case "vmess":
-			node, err := ray2sing.VmessSingbox(line)
-			if err != nil {
-				continue
-			}
-			mapNode, _ := StructToMap(node)
-			outbounds = append(outbounds, mapNode)
-		case "trojan":
-			node, err := ray2sing.TrojanSingbox(line)
-			if err != nil {
-				continue
-			}
-			mapNode, _ := StructToMap(node)
-			outbounds = append(outbounds, mapNode)
-		case "vless":
-			node, err := ray2sing.VlessSingbox(line)
-			if err != nil {
-				continue
-			}
-			mapNode, _ := StructToMap(node)
-			outbounds = append(outbounds, mapNode)
-		case "hysteria":
-			node, err := ray2sing.HysteriaSingbox(line)
-			if err != nil {
-				continue
-			}
-			mapNode, _ := StructToMap(node)
-			outbounds = append(outbounds, mapNode)
-		case "hysteria2":
-			node, err := ray2sing.Hysteria2Singbox(line)
-			if err != nil {
-				continue
-			}
-			mapNode, _ := StructToMap(node)
-			outbounds = append(outbounds, mapNode)
-		}
+		mapNode, _ := StringToMap(node)
+		outbounds = append(outbounds, mapNode)
+
 	}
 	if len(outbounds) <= 0 {
 		return nil, errors.New("no content")
@@ -88,6 +47,7 @@ func Handler(url string) ([]byte, error) {
 		utils.LogError("convertSubscribe error")
 		return nil, err
 	}
+
 	template, err := os.ReadFile("./resources/template/template.json")
 	if err != nil {
 		return nil, err
