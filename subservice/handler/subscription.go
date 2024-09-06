@@ -1,9 +1,9 @@
 package handler
 
 import (
+	"github.com/daifiyum/cat-box/converter"
 	"github.com/daifiyum/cat-box/subservice/database"
 	"github.com/daifiyum/cat-box/subservice/models"
-	"github.com/daifiyum/cat-box/subservice/parser"
 
 	"github.com/daifiyum/cat-box/singbox"
 	"github.com/daifiyum/cat-box/utils"
@@ -25,7 +25,7 @@ func CreateSubscribe(c *fiber.Ctx) error {
 	if err := c.BodyParser(subscribe); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Couldn't create subscribe", "data": err})
 	}
-	res, err := parser.Handler(subscribe.Link)
+	res, err := converter.Handler(subscribe.Link)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Couldn't create subscribe", "data": err})
 	}
@@ -82,7 +82,7 @@ func UpdateSubscribe(c *fiber.Ctx) error {
 	db := database.DB
 	subscribe := new(models.Subscriptions)
 	db.First(subscribe, id)
-	res, err := parser.Handler(subscribe.Link)
+	res, err := converter.Handler(subscribe.Link)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Couldn't update subscribe", "data": err})
 	}

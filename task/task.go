@@ -1,10 +1,10 @@
 package task
 
 import (
+	"github.com/daifiyum/cat-box/converter"
 	"github.com/daifiyum/cat-box/singbox"
 	"github.com/daifiyum/cat-box/subservice/database"
 	"github.com/daifiyum/cat-box/subservice/models"
-	"github.com/daifiyum/cat-box/subservice/parser"
 	"github.com/daifiyum/cat-box/utils"
 
 	"github.com/robfig/cron/v3"
@@ -18,7 +18,7 @@ func handleUpdate() {
 	db.Find(&subscriptions)
 	for _, subscription := range subscriptions {
 		if subscription.AutoUpdate {
-			config, err := parser.Handler(subscription.Link)
+			config, err := converter.Handler(subscription.Link)
 			if err != nil {
 				utils.LogError("Failed to generate configuration")
 				continue
