@@ -77,10 +77,7 @@
     {
       "tag": "proxy",
       "type": "selector",
-      "outbounds": [
-        "auto",
-        "direct"
-      ]
+      "outbounds": ["auto", "direct"]
     },
     {
       "tag": "openai",

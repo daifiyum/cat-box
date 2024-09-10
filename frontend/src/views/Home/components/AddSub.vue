@@ -9,17 +9,19 @@
       hide-details
       required
     >
+      <template v-slot:append-inner>
+        <v-btn
+          class="ml-3"
+          color="primary"
+          :disabled="!valid"
+          :loading="loading"
+          prepend-icon="mdi-file-download-outline"
+          @click="addSubData"
+        >
+          导入
+        </v-btn>
+      </template>
     </v-text-field>
-    <v-btn
-      class="ml-3"
-      color="primary"
-      :disabled="!valid"
-      :loading="loading"
-      prepend-icon="mdi-file-download-outline"
-      @click="addSubData"
-    >
-      导入
-    </v-btn>
   </v-form>
 </template>
 

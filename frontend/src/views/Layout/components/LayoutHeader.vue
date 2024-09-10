@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar>
+  <v-app-bar class="px-2">
     <template v-slot:prepend>
       <v-img
         src="@/assets/logo.svg"
@@ -36,4 +36,4 @@ const { drawer } = storeToRefs(drawerStore);
 const toProxyManager = ref(`http://${window.location.hostname}:9090/ui/`);
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="css" scoped></style>
