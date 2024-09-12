@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar class="px-2">
+  <v-app-bar class="px-2" elevation="2">
     <template v-slot:prepend>
       <v-img
         src="@/assets/logo.svg"

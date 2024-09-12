@@ -104,14 +104,15 @@ async function rwOne(id) {
     link: subLink.value,
     auto_update: autoUpdateToNum.value,
   });
-  emitter.emit("reloadData");
   dialog.value = false;
+  emitter.emit("reloadData");
 }
 
 async function upOne(id) {
   loading.value = true;
   await up_sub(id);
   loading.value = false;
+  emitter.emit("reloadData");
 }
 </script>
 
