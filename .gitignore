@@ -1,6 +1,6 @@
 *.log
 resources/db/*
-!resources/db/
+!resources/db/.gitkeep
 resources/core/config.json
 build/resources/
 build/cat-box.exe
