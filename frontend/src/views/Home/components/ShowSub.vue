@@ -56,7 +56,6 @@ async function fetchData() {
 }
 onBeforeMount(async () => {
   fetchData();
-  console.log(formatData.value);
 });
 
 emitter.on("reloadData", () => {

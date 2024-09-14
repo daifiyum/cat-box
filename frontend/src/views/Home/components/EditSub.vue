@@ -85,14 +85,6 @@ let subLink = ref(item.link);
 let loading = ref(false);
 let autoUpdate = ref(item.auto_update);
 
-let autoUpdateToNum = computed(() => {
-  if (autoUpdate.value) {
-    return 1;
-  } else {
-    return 0;
-  }
-});
-
 async function rmOne(id) {
   await rm_sub(id);
   emitter.emit("reloadData");
@@ -102,7 +94,7 @@ async function rwOne(id) {
   await rw_sub(id, {
     name: subName.value,
     link: subLink.value,
-    auto_update: autoUpdateToNum.value,
+    auto_update: autoUpdate.value,
   });
   dialog.value = false;
   emitter.emit("reloadData");

@@ -1,5 +1,6 @@
 *.log
 resources/db/*
+!resources/db/
 resources/core/config.json
 build/resources/
 build/cat-box.exe

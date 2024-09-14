@@ -35,7 +35,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import SnackBar from "../../../components/Snackbar.vue";
-import { getDelay, setDelay } from "@/api/config";
+import { getSetting, setSetting } from "@/api/setting";
 import { storeToRefs } from "pinia";
 import { useDrawerStore } from "@/stores/drawer";
 const drawerStore = useDrawerStore();
@@ -45,12 +45,12 @@ const snackbarRef = ref(null);
 // 设置抽屉
 const updateDelay = ref("");
 onMounted(async () => {
-  const { data } = await getDelay();
-  updateDelay.value = data.update_delay;
+  const { data } = await getSetting("update_delay");
+  updateDelay.value = data.value;
 });
 
 async function setUpdateDelay() {
-  await setDelay({ update_delay: updateDelay.value });
+  await setSetting("update_delay", updateDelay.value);
   showSnackbar("新设置已保存");
 }
 

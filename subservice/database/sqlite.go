@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var DB *gorm.DB
+
 // ConnectDB connect to db
 func ConnectDB() error {
 	var err error
@@ -17,10 +19,14 @@ func ConnectDB() error {
 	}
 
 	// migrate database
-	DB.AutoMigrate(&models.Subscriptions{}, &models.Options{})
+	DB.AutoMigrate(&models.Subscriptions{}, &models.Setting{})
 
 	// create default options if not exists
-	options := models.Options{}
-	DB.FirstOrCreate(&options)
+	DB.FirstOrCreate(&models.Setting{}, models.Setting{Key: "update_delay"})
+	setting := new(models.Setting)
+	DB.Where("key = ?", "update_delay").First(setting)
+	if setting.Value == "none" {
+		DB.Model(setting).Where("key = ?", "update_delay").Update("value", "30m")
+	}
 	return nil
 }

@@ -14,11 +14,6 @@ func SetupRoutes(app *fiber.App) {
 	// api
 	api := app.Group("/api")
 
-	// Option
-	option := api.Group("/option")
-	option.Post("/", handler.UpdateOption)
-	option.Get("/", handler.GetOption)
-
 	// Subscribe
 	subscribe := api.Group("/subscribe")
 	subscribe.Get("/", handler.GetAllSubscribe)
@@ -28,4 +23,9 @@ func SetupRoutes(app *fiber.App) {
 	subscribe.Put("/:id/active", handler.ActiveSubscribe)
 	subscribe.Put("/:id/edit", handler.EditSubscribe)
 	subscribe.Put("/:id/update", handler.UpdateSubscribe)
+
+	// setting
+	setting := api.Group("/setting")
+	setting.Get("/:key", handler.GetSetting)
+	setting.Post("/:key", handler.UpdateSetting)
 }

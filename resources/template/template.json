@@ -29,10 +29,6 @@
         "address_strategy": "ipv4_only",
         "strategy": "prefer_ipv4",
         "detour": "direct"
-      },
-      {
-        "tag": "block",
-        "address": "rcode://success"
       }
     ],
     "rules": [
@@ -77,7 +73,10 @@
     {
       "tag": "proxy",
       "type": "selector",
-      "outbounds": ["auto", "direct"]
+      "outbounds": [
+        "auto",
+        "direct"
+      ]
     },
     {
       "tag": "openai",
@@ -134,26 +133,37 @@
       {
         "ip_is_private": true,
         "outbound": "direct"
+      },
+      {
+        "domain_suffix": [
+          "gpt.ge",
+          "iplaysoft.com",
+          "appinn.com"
+        ],
+        "outbound": "direct"
       }
     ],
     "rule_set": [
       {
         "tag": "geoip-cn",
-        "type": "local",
+        "type": "remote",
         "format": "binary",
-        "path": "resources/geo/geoip-cn.srs"
+        "url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs",
+        "download_detour": "direct"
       },
       {
         "tag": "geosite-cn",
-        "type": "local",
+        "type": "remote",
         "format": "binary",
-        "path": "resources/geo/geosite-cn.srs"
+        "url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs",
+        "download_detour": "direct"
       },
       {
         "tag": "openai",
-        "type": "local",
+        "type": "remote",
         "format": "binary",
-        "path": "resources/geo/openai.srs"
+        "url": "https://raw.githubusercontent.com/Toperlock/sing-box-geosite/main/rule/OpenAI.srs",
+        "download_detour": "proxy"
       }
     ],
     "auto_detect_interface": true,

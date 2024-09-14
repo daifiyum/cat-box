@@ -1,19 +1,19 @@
 import service from "@/utils/axios";
 
 // 获取配置
-export function getDelay() {
+export function getSetting(key) {
   return service({
     method: "GET",
-    url: "/option",
+    url: `/setting/${key}`,
   });
 }
 
 // 更新配置
-export function setDelay(data) {
+export function setSetting(key, value) {
   return service({
     method: "POST",
-    url: "/option",
-    data,
+    url: `/setting/${key}`,
+    data: { value },
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },

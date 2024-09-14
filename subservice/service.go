@@ -25,7 +25,7 @@ func SubService() {
 	}
 
 	router.SetupRoutes(app)
-	task.InitScheduler()
+	task.Scheduler()
 
 	app.Listen(":3000")
 }

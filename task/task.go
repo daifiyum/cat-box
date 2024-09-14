@@ -12,6 +12,20 @@ import (
 
 var scheduler *cron.Cron
 
+func Scheduler() {
+	if scheduler != nil {
+		scheduler.Stop()
+	}
+	db := database.DB
+	setting := new(models.Setting)
+	db.Where("key = ?", "update_delay").First(setting)
+	scheduler = cron.New()
+	scheduler.AddFunc("@every "+setting.Value, func() {
+		handleUpdate()
+	})
+	scheduler.Start()
+}
+
 func handleUpdate() {
 	db := database.DB
 	var subscriptions []models.Subscriptions
@@ -36,27 +50,4 @@ func handleUpdate() {
 			utils.LogInfo("Automatic update successful")
 		}
 	}
-}
-
-func InitScheduler() {
-	db := database.DB
-	options := new(models.Options)
-	db.Model(options).Where("name=?", "options").First(options)
-	scheduler = cron.New()
-	scheduler.AddFunc("@every "+options.UpdateDelay, func() {
-		handleUpdate()
-	})
-	scheduler.Start()
-}
-
-func Scheduler(delay string) {
-	if scheduler != nil {
-		scheduler.Stop()
-	}
-
-	scheduler = cron.New()
-	scheduler.AddFunc("@every "+delay, func() {
-		handleUpdate()
-	})
-	scheduler.Start()
 }
