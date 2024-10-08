@@ -1,11 +1,16 @@
 package singbox
 
 import (
+	"encoding/json"
+	"os"
 	"os/exec"
 	"sync"
 	"syscall"
 
+	"github.com/daifiyum/cat-box/subservice/database"
+	"github.com/daifiyum/cat-box/subservice/models"
 	"github.com/daifiyum/cat-box/utils"
+	"github.com/sagernet/sing-box/option"
 	"golang.org/x/sys/windows"
 )
 
@@ -32,7 +37,7 @@ func Start() error {
 		return err
 	}
 
-	err = GenerateConfig()
+	err = modeSwitch()
 	if err != nil {
 		return err
 	}
@@ -82,4 +87,76 @@ func CheckCoreStatus() {
 	} else {
 		utils.IsProxy = true
 	}
+}
+
+func terminateProc(pid int) error {
+	dll, err := windows.LoadDLL("kernel32.dll")
+	if err != nil {
+		return err
+	}
+	defer dll.Release()
+
+	f, err := dll.FindProc("AttachConsole")
+	if err != nil {
+		return err
+	}
+	r1, _, err := f.Call(uintptr(pid))
+	if r1 == 0 && err != syscall.ERROR_ACCESS_DENIED {
+		return err
+	}
+
+	f, err = dll.FindProc("SetConsoleCtrlHandler")
+	if err != nil {
+		return err
+	}
+	r1, _, err = f.Call(0, 1)
+	if r1 == 0 {
+		return err
+	}
+	f, err = dll.FindProc("GenerateConsoleCtrlEvent")
+	if err != nil {
+		return err
+	}
+	r1, _, err = f.Call(windows.CTRL_BREAK_EVENT, uintptr(pid))
+	if r1 == 0 {
+		return err
+	}
+	return nil
+}
+
+func modeSwitch() error {
+	isTun := utils.IsTun
+	db := database.DB
+	var subscriptions models.Subscriptions
+	db.Where("active = ?", true).First(&subscriptions)
+
+	var options option.Options
+
+	options.UnmarshalJSON([]byte(subscriptions.Data))
+	if !isTun {
+		for index := range options.Inbounds {
+			i := &options.Inbounds[index]
+			if i.Type == "mixed" {
+				i.MixedOptions.SetSystemProxy = true
+			}
+			if i.Type == "tun" {
+				options.Inbounds = append(options.Inbounds[:index], options.Inbounds[index+1:]...)
+				index--
+			}
+		}
+	} else {
+		for index := range options.Inbounds {
+			i := &options.Inbounds[index]
+			if i.Type == "mixed" {
+				i.MixedOptions.SetSystemProxy = false
+			}
+		}
+	}
+
+	config, _ := json.MarshalIndent(options, "", "  ")
+	err := os.WriteFile("./resources/core/config.json", []byte(config), 0666)
+	if err != nil {
+		return err
+	}
+	return nil
 }

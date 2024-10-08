@@ -2,7 +2,6 @@ package common
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/daifiyum/cat-box/utils"
+	"github.com/sagernet/sing-box/option"
 	"golang.org/x/net/proxy"
 )
 
@@ -76,34 +76,21 @@ func FetchSubscribe(suburl string) ([]byte, error) {
 	return decodedBody, nil
 }
 
-// 转换数据
-func StringToMap(data string) (map[string]interface{}, error) {
-	var result map[string]interface{}
-	err := json.Unmarshal([]byte(data), &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
 func GetMixedPort() (string, error) {
 	template, err := os.ReadFile("./resources/template/template.json")
 	if err != nil {
 		return "", err
 	}
-	mapTemplate := make(map[string]interface{})
-	if err := json.Unmarshal(template, &mapTemplate); err != nil {
-		return "", err
-	}
 
-	var MixedPort string
-	for _, i := range mapTemplate["inbounds"].([]interface{}) {
-		m, _ := i.(map[string]interface{})
+	var options option.Options
 
-		if m["type"] == "mixed" {
-			v := m["listen_port"].(float64)
-			MixedPort = strconv.Itoa(int(v))
+	options.UnmarshalJSON(template)
+	var portStr string
+	for _, i := range options.Inbounds {
+		if i.Type == "mixed" {
+			portStr = strconv.Itoa(int(i.MixedOptions.ListenPort))
+			break
 		}
 	}
-	return MixedPort, nil
+	return portStr, nil
 }

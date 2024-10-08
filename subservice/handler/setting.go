@@ -30,7 +30,7 @@ func UpdateSetting(c *fiber.Ctx) error {
 	}
 
 	db := database.DB
-	if err := db.Model(&models.Setting{}).Where("key = ?", key).Updates(setting).Error; err != nil {
+	if err := db.Model(&models.Setting{Key: key}).Where("key = ?", key).Updates(setting).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Failed to update setting", "data": nil})
 	}
 	// 指定设置项：触发更新

@@ -21,12 +21,12 @@ func Scheduler() {
 	db.Where("key = ?", "update_delay").First(setting)
 	scheduler = cron.New()
 	scheduler.AddFunc("@every "+setting.Value, func() {
-		handleUpdate()
+		SubUpdate()
 	})
 	scheduler.Start()
 }
 
-func handleUpdate() {
+func SubUpdate() {
 	db := database.DB
 	var subscriptions []models.Subscriptions
 	db.Find(&subscriptions)
