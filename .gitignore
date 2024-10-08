@@ -2,7 +2,6 @@
 resources/db/*
 !resources/db/.gitkeep
 resources/core/config.json
-build/resources/
-build/cat-box.exe
-build/cat-box.syso
-build/buildForMe.ps1
+build/*
+tmp/*
+.air.toml
