@@ -82,6 +82,21 @@ func decodeBase64Safe(content string) string {
 	return content
 }
 
+func convertToStrings(data map[string]any) map[string]string {
+	stringMap := make(map[string]string)
+	for key, value := range data {
+		switch v := value.(type) {
+		case string:
+			stringMap[key] = v
+		case float64:
+			stringMap[key] = strconv.Itoa(int(v))
+		default:
+			stringMap[key] = fmt.Sprintf("%v", v)
+		}
+	}
+	return stringMap
+}
+
 func trimBlank(str string) string {
 	str = strings.Trim(str, " ")
 	str = strings.Trim(str, "\a")
@@ -270,36 +285,11 @@ func newVMessNativeParser(content string) (option.Outbound, error) {
 	outbound := option.Outbound{
 		Type: C.TypeVMess,
 	}
-	var proxy map[string]string
-	err := json.Unmarshal([]byte(content), &proxy)
+	var proxyRaw map[string]any
+	err := json.Unmarshal([]byte(content), &proxyRaw)
+	proxy := convertToStrings(proxyRaw)
 	if err != nil {
-		proxy = make(map[string]string)
-		result := vmessParser.FindStringSubmatch(content)
-		if len(result) == 0 {
-			return outbound, E.New("invalid vmess uri")
-		}
-		proxy["id"] = decodeURIComponent(result[1])
-		proxy["add"] = decodeURIComponent(result[2])
-		proxy["port"] = decodeURIComponent(result[3])
-		proxy["ps"] = decodeURIComponent(result[5])
-		for _, addon := range strings.Split(result[4], "&") {
-			key, value := splitKeyValueWithEqual(addon)
-			switch key {
-			case "type":
-				if value == "http" {
-					proxy["net"] = "tcp"
-					proxy["type"] = "http"
-				}
-			case "encryption":
-				proxy["scy"] = value
-			case "alterId":
-				proxy["aid"] = value
-			case "key", "alpn", "seed", "path", "host":
-				proxy[key] = decodeURIComponent(value)
-			default:
-				proxy[key] = value
-			}
-		}
+		return outbound, E.New("invalid vmess uri")
 	}
 	outbound.Type = C.TypeVMess
 	options := option.VMessOutboundOptions{}
@@ -308,6 +298,7 @@ func newVMessNativeParser(content string) (option.Outbound, error) {
 		UTLS:    &option.OutboundUTLSOptions{},
 		Reality: &option.OutboundRealityOptions{},
 	}
+
 	for key, value := range proxy {
 		switch key {
 		case "ps":
@@ -341,7 +332,8 @@ func newVMessNativeParser(content string) (option.Outbound, error) {
 			TLSOptions.UTLS.Enabled = true
 			TLSOptions.UTLS.Fingerprint = value
 		case "net":
-			Transport := option.V2RayTransportOptions{
+			var Transport *option.V2RayTransportOptions
+			Transport = &option.V2RayTransportOptions{
 				Type: "",
 				WebsocketOptions: option.V2RayWebsocketOptions{
 					Headers: map[string]option.Listable[string]{},
@@ -408,6 +400,8 @@ func newVMessNativeParser(content string) (option.Outbound, error) {
 								Transport.HTTPOptions.Headers[key] = value
 							}
 						}
+					} else {
+						Transport = nil
 					}
 				}
 			case "grpc":
@@ -415,8 +409,11 @@ func newVMessNativeParser(content string) (option.Outbound, error) {
 				if host, exists := proxy["host"]; exists && host != "" {
 					Transport.GRPCOptions.ServiceName = host
 				}
+			default:
+				Transport = nil
 			}
-			options.Transport = &Transport
+			options.Transport = Transport
+
 		case "tfo", "tcp-fast-open", "tcp_fast_open":
 			if value == "1" || value == "true" {
 				options.TCPFastOpen = true
@@ -591,7 +588,8 @@ func newTrojanNativeParser(content string) (option.Outbound, error) {
 			TLSOptions.UTLS.Enabled = true
 			TLSOptions.UTLS.Fingerprint = value
 		case "type":
-			Transport := option.V2RayTransportOptions{
+			var Transport *option.V2RayTransportOptions
+			Transport = &option.V2RayTransportOptions{
 				Type: "",
 				WebsocketOptions: option.V2RayWebsocketOptions{
 					Headers: map[string]option.Listable[string]{},
@@ -631,8 +629,10 @@ func newTrojanNativeParser(content string) (option.Outbound, error) {
 				if serviceName, exists := proxy["grpc-service-name"]; exists && serviceName != "" {
 					Transport.GRPCOptions.ServiceName = serviceName
 				}
+			default:
+				Transport = nil
 			}
-			options.Transport = &Transport
+			options.Transport = Transport
 		case "tfo", "tcp-fast-open", "tcp_fast_open":
 			if value == "1" || value == "true" {
 				options.TCPFastOpen = true

@@ -5,3 +5,4 @@ resources/core/config.json
 build/*
 tmp/*
 .air.toml
+build.ps1
