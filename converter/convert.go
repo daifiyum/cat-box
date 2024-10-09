@@ -104,13 +104,11 @@ func Handler(url string) ([]byte, error) {
 
 	req, err := FetchSubscribe(url)
 	if err != nil {
-		utils.LogError("fetchSubscribe errors")
 		return nil, err
 	}
 
 	outbounds, err := native.NewNativeURIParser(string(req))
 	if err != nil {
-		utils.LogError("convertSubscribe error")
 		return nil, err
 	}
 

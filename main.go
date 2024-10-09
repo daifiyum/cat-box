@@ -9,12 +9,12 @@ import (
 )
 
 func main() {
-	utils.AppInit()
 	systray.Run(onReady, onExit)
 }
 
 func onReady() {
-	tray.InitTray()
+	utils.AppInit()
+	tray.RunTray()
 	subservice.SubService()
 }
 

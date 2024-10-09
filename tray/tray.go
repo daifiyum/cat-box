@@ -10,18 +10,39 @@ import (
 	"github.com/energye/systray"
 )
 
-func InitTray() {
-	InitIcons()
+var (
+	moduser32              = syscall.NewLazyDLL("user32.dll")
+	procSetProcessDPIAware = moduser32.NewProc("SetProcessDPIAware")
+)
 
+// 高分辨率显示
+func SetProcessDPIAware() {
+	procSetProcessDPIAware.Call()
+}
+
+func RunTray() {
+	SetProcessDPIAware()
+	InitIcons()
+	CreateTray()
+	CreateMenu()
+}
+
+func OpenBrowser(url string) {
+	cmd := exec.Command("cmd", "/c", "start", url)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		HideWindow: true,
+	}
+	cmd.Run()
+}
+
+func CreateTray() {
 	systray.SetIcon(AppIcon)
 	systray.SetTitle("cat-box")
 	systray.SetTooltip("cat-box")
-
 	systray.SetOnClick(func(menu systray.IMenu) {
 		if utils.IsProxy {
 			err := singbox.Stop()
 			if err != nil {
-				utils.LogError("Failed to start sing-box")
 				return
 			}
 			systray.SetIcon(AppIcon)
@@ -34,7 +55,6 @@ func InitTray() {
 			}
 			err := singbox.Start()
 			if err != nil {
-				utils.LogError("Failed to start sing-box")
 				return
 			}
 			systray.SetIcon(ProxyIcon)
@@ -42,23 +62,10 @@ func InitTray() {
 		}
 		singbox.CheckCoreStatus()
 	})
-
-	CreateItem()
 }
 
-func OpenBrowser(url string) {
-	cmd := exec.Command("cmd", "/c", "start", url)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		HideWindow: true,
-	}
-	err := cmd.Run()
-	if err != nil {
-		utils.LogError("Failed to open browser")
-	}
-}
-
-func CreateItem() {
-	// items
+func CreateMenu() {
+	// menu
 	mHome := systray.AddMenuItem("面板", "打开代理面板")
 	mHome.SetIcon(HomeIcon)
 

@@ -42,7 +42,6 @@ func DeleteSubscribe(c *fiber.Ctx) error {
 	db.First(subscribe, id)
 	if subscribe.Name == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "No subscribe found with ID", "data": nil})
-
 	}
 	db.Delete(subscribe)
 	return c.JSON(fiber.Map{"status": "success", "message": "Subscribe successfully deleted", "data": nil})
@@ -70,7 +69,7 @@ func ActiveSubscribe(c *fiber.Ctx) error {
 	if utils.IsProxy {
 		err := singbox.Start()
 		if err != nil {
-			utils.LogError("Failed to reload sing-box")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Failed to reload sing-box"})
 		}
 	}
 	return c.JSON(fiber.Map{"status": "success", "message": "Subscribe successfully active", "data": nil})
@@ -92,7 +91,7 @@ func UpdateSubscribe(c *fiber.Ctx) error {
 		if utils.IsProxy {
 			err := singbox.Start()
 			if err != nil {
-				utils.LogError("Failed to reload sing-box")
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Failed to reload sing-box"})
 			}
 		}
 	}

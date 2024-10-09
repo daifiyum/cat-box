@@ -9,13 +9,11 @@ import (
 
 var DB *gorm.DB
 
-// ConnectDB connect to db
-func ConnectDB() error {
+func InitDatabase() {
 	var err error
 	DB, err = gorm.Open(sqlite.Open("./resources/db/app.db"), &gorm.Config{})
-
 	if err != nil {
-		return err
+		panic("failed to connect database")
 	}
 
 	// migrate database
@@ -28,5 +26,4 @@ func ConnectDB() error {
 	if setting.Value == "none" {
 		DB.Model(setting).Where("key = ?", "update_delay").Update("value", "30m")
 	}
-	return nil
 }

@@ -34,7 +34,6 @@ func SubUpdate() {
 		if subscription.AutoUpdate {
 			config, err := converter.Handler(subscription.Link)
 			if err != nil {
-				utils.LogError("Failed to generate configuration")
 				continue
 			}
 			db.Model(&subscription).Where(subscription.ID).Update("data", config)
@@ -42,12 +41,10 @@ func SubUpdate() {
 				if utils.IsProxy {
 					err = singbox.Start()
 					if err != nil {
-						utils.LogError("Failed to reload configuration")
 						continue
 					}
 				}
 			}
-			utils.LogInfo("Automatic update successful")
 		}
 	}
 }
