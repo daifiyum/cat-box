@@ -89,6 +89,7 @@ func UpdateSubscribe(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Couldn't update subscribe", "data": err})
 	}
 	subscribe.Data = string(res)
+	subscribe.UpdatedTime = time.Now()
 	db.Save(subscribe)
 	if subscribe.Active {
 		if utils.IsProxy {
