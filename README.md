@@ -14,7 +14,7 @@
 
 ### 快速上手
 
-![](https://thumbsnap.com/i/hEoHi8nY.png)
+![](https://thumbsnap.com/i/2mqhk6zV.png)
 
 ### 模板
 
