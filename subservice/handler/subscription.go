@@ -31,8 +31,11 @@ func CreateSubscribe(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Couldn't create subscribe", "data": err})
 	}
+	var maxSortOrder int
+	db.Model(subscribe).Select("MAX(sort_order)").Scan(&maxSortOrder)
 	subscribe.UpdatedTime = time.Now()
 	subscribe.Data = string(res)
+	subscribe.SortOrder = maxSortOrder + 1
 	db.Create(&subscribe)
 	return c.JSON(fiber.Map{"status": "success", "message": "Created subscribe", "data": subscribe})
 }
@@ -110,7 +113,7 @@ func OrderSubscribe(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Couldn't parse data", "data": err})
 	}
 	for index, item := range *subscribe {
-		db.Model(subscribe).Where("id = ?", item.ID).Update("sort_order", index)
+		db.Model(subscribe).Where("id = ?", item.ID).Update("sort_order", index+1)
 	}
 	return c.JSON(fiber.Map{"status": "success", "message": "Subscribe successfully ordered", "data": nil})
 }

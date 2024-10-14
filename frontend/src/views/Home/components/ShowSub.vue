@@ -13,7 +13,10 @@
         <v-divider></v-divider>
         <v-card-actions>
           <div class="d-flex align-center text-medium-emphasis">
-            <v-icon icon="mdi-dots-grid" class="handle cursor-move me-2"></v-icon>
+            <v-icon
+              icon="mdi-dots-grid"
+              class="handle cursor-move me-2"
+            ></v-icon>
             <v-icon icon="mdi-update"></v-icon>
             <span>{{ formatTime(item.updated_at) }}更新</span>
           </div>
@@ -27,23 +30,18 @@
 
 <script setup>
 import EditSub from "./EditSub.vue";
-import { ref, onBeforeMount, onUnmounted, computed } from "vue";
+import { ref, onBeforeMount, onUnmounted } from "vue";
 import { get_sub, sw_sub, order_sub } from "@/api/home";
 import { useDraggable } from "vue-draggable-plus";
 import emitter from "@/utils/emitter";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
-import { useSubStore } from "@/stores/sub";
-import { storeToRefs } from "pinia";
-
-const subStore = useSubStore();
-const { subNum } = storeToRefs(subStore);
 
 dayjs.extend(relativeTime);
 dayjs.locale("zh-cn");
 
-const el = ref()
+const el = ref();
 const subData = ref([]);
 
 function formatTime(isoString) {
@@ -52,15 +50,14 @@ function formatTime(isoString) {
 
 async function fetchData() {
   let res = await get_sub();
-  subData.value = res.data;
-  subNum.value = subData.value.length
+  subData.value = res.data
 }
 onBeforeMount(async () => {
-  fetchData();  
+  fetchData();
 });
 
 emitter.on("reloadData", () => {
-  fetchData();
+  fetchData()
 });
 
 onUnmounted(() => {
@@ -74,11 +71,12 @@ async function swOne(id) {
 
 useDraggable(el, subData, {
   animation: 150,
-  handle: '.handle',
+  handle: ".handle",
   async onUpdate() {
-    await order_sub(subData.value)
-  }
-})
+    await order_sub(subData.value);
+  },
+});
+
 </script>
 
 <style lang="css" scoped></style>

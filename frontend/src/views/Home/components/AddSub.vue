@@ -29,11 +29,6 @@
 import { ref, reactive } from "vue";
 import { add_sub } from "@/api/home";
 import emitter from "@/utils/emitter";
-import { useSubStore } from "@/stores/sub";
-import { storeToRefs } from "pinia";
-
-const subStore = useSubStore();
-const { subNum } = storeToRefs(subStore);
 
 let valid = ref(true);
 let subLink = ref("");
@@ -45,8 +40,7 @@ async function addSubData() {
   valid.value = !valid.value;
   await add_sub({
     name: "订阅",
-    link: subLink.value,
-    sort_order: subNum.value
+    link: subLink.value
   });
   emitter.emit("reloadData");
   loading.value = false;
