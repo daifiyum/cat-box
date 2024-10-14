@@ -15,7 +15,7 @@ export function add_sub(data) {
     url: "/subscribe",
     data,
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
     },
   });
 }
@@ -53,5 +53,17 @@ export function sw_sub(id) {
   return service({
     method: "PUT",
     url: `/subscribe/${id}/active`,
+  });
+}
+
+// 排序
+export function order_sub(data) {
+  return service({
+    method: "PUT",
+    url: `/subscribe/order`,
+    data,
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 }

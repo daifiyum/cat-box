@@ -10,7 +10,8 @@
     <v-app-bar-title>订阅</v-app-bar-title>
     <template v-slot:append>
       <v-btn
-        variant="outlined"
+        variant="text"
+        size="large"
         rounded
         color="primary"
         prepend-icon="mdi-vpn"

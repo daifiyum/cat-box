@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"time"
+
 	"github.com/daifiyum/cat-box/converter"
 	"github.com/daifiyum/cat-box/subservice/database"
 	"github.com/daifiyum/cat-box/subservice/models"
@@ -14,7 +16,7 @@ import (
 func GetAllSubscribe(c *fiber.Ctx) error {
 	db := database.DB
 	var subscribe []models.Subscriptions
-	db.Find(&subscribe)
+	db.Order("sort_order asc").Find(&subscribe)
 	return c.JSON(fiber.Map{"status": "success", "message": "All subscribe", "data": subscribe})
 }
 
@@ -29,6 +31,7 @@ func CreateSubscribe(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Couldn't create subscribe", "data": err})
 	}
+	subscribe.UpdatedTime = time.Now()
 	subscribe.Data = string(res)
 	db.Create(&subscribe)
 	return c.JSON(fiber.Map{"status": "success", "message": "Created subscribe", "data": subscribe})
@@ -96,4 +99,17 @@ func UpdateSubscribe(c *fiber.Ctx) error {
 		}
 	}
 	return c.JSON(fiber.Map{"status": "success", "message": "Subscribe successfully updated", "data": nil})
+}
+
+// 排序
+func OrderSubscribe(c *fiber.Ctx) error {
+	db := database.DB
+	subscribe := new([]models.Subscriptions)
+	if err := c.BodyParser(subscribe); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Couldn't parse data", "data": err})
+	}
+	for index, item := range *subscribe {
+		db.Model(subscribe).Where("id = ?", item.ID).Update("sort_order", index)
+	}
+	return c.JSON(fiber.Map{"status": "success", "message": "Subscribe successfully ordered", "data": nil})
 }

@@ -2,7 +2,8 @@
   <v-dialog v-model="dialog" max-width="450">
     <template v-slot:activator="{ props: activatorProps }">
       <v-btn
-        variant="outlined"
+        variant="text"
+        size="large"
         rounded
         color="primary"
         prepend-icon="mdi-pencil-outline"
@@ -41,8 +42,10 @@
 
         <v-btn
           color="primary"
+          variant="text"
+          size="large"
+          rounded
           text="保存"
-          variant="tonal"
           :disabled="!valid"
           @click="rwOne(item.id)"
         ></v-btn>
@@ -50,7 +53,8 @@
     </v-card>
   </v-dialog>
   <v-btn
-    variant="outlined"
+    variant="text"
+    size="large"
     rounded
     color="primary"
     prepend-icon="mdi-update"
@@ -60,7 +64,8 @@
     更新
   </v-btn>
   <v-btn
-    variant="outlined"
+    variant="text"
+    size="large"
     rounded
     color="error"
     prepend-icon="mdi-trash-can-outline"

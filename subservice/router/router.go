@@ -23,6 +23,7 @@ func SetupRoutes(app *fiber.App) {
 	subscribe.Put("/:id/active", handler.ActiveSubscribe)
 	subscribe.Put("/:id/edit", handler.EditSubscribe)
 	subscribe.Put("/:id/update", handler.UpdateSubscribe)
+	subscribe.Put("/order", handler.OrderSubscribe)
 
 	// setting
 	setting := api.Group("/setting")
