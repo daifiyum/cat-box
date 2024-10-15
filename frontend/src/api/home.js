@@ -35,7 +35,7 @@ export function rw_sub(id, data) {
     url: `/subscribe/${id}/edit`,
     data,
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
     },
   });
 }

@@ -24,11 +24,9 @@ func GetSetting(c *fiber.Ctx) error {
 func UpdateSetting(c *fiber.Ctx) error {
 	key := c.Params("key")
 	setting := new(models.Setting)
-
 	if err := c.BodyParser(setting); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Cannot parse body input", "data": nil})
 	}
-
 	db := database.DB
 	if err := db.Model(&models.Setting{Key: key}).Where("key = ?", key).Updates(setting).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Failed to update setting", "data": nil})

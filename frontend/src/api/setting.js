@@ -15,7 +15,7 @@ export function setSetting(key, value) {
     url: `/setting/${key}`,
     data: { value },
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
     },
   });
 }

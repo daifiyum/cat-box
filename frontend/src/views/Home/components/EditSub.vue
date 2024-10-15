@@ -95,7 +95,7 @@ async function rmOne(id) {
   emitter.emit("reloadData");
 }
 
-async function rwOne(id) {
+async function rwOne(id) { 
   await rw_sub(id, {
     name: subName.value,
     link: subLink.value,

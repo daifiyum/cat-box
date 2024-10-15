@@ -1,6 +1,8 @@
 package task
 
 import (
+	"time"
+
 	"github.com/daifiyum/cat-box/converter"
 	"github.com/daifiyum/cat-box/singbox"
 	"github.com/daifiyum/cat-box/subservice/database"
@@ -30,21 +32,28 @@ func SubUpdate() {
 	db := database.DB
 	var subscriptions []models.Subscriptions
 	db.Find(&subscriptions)
+	var updates []models.Subscriptions
 	for _, subscription := range subscriptions {
 		if subscription.AutoUpdate {
 			config, err := converter.Handler(subscription.Link)
 			if err != nil {
 				continue
 			}
-			db.Model(&subscription).Where(subscription.ID).Update("data", config)
+			subscription.Data = string(config)
+			subscription.UpdatedTime = time.Now()
+			updates = append(updates, subscription)
 			if subscription.Active {
 				if utils.IsProxy {
 					err = singbox.Start()
 					if err != nil {
 						continue
 					}
+					time.Sleep(5 * time.Second)
 				}
 			}
 		}
+	}
+	if len(updates) > 0 {
+		db.Save(&updates)
 	}
 }
