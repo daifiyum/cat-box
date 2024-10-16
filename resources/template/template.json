@@ -60,8 +60,7 @@
       "type": "tun",
       "stack": "mixed",
       "domain_strategy": "prefer_ipv4",
-      "inet4_address": "172.19.0.1/30",
-      "inet6_address": "fdfe:dcba:9876::1/126",
+      "address": ["172.19.0.1/30", "fdfe:dcba:9876::0/126"],
       "mtu": 9000,
       "sniff": true,
       "sniff_override_destination": true,
@@ -73,10 +72,7 @@
     {
       "tag": "proxy",
       "type": "selector",
-      "outbounds": [
-        "auto",
-        "direct"
-      ]
+      "outbounds": ["auto", "direct"]
     },
     {
       "tag": "openai",
@@ -135,11 +131,7 @@
         "outbound": "direct"
       },
       {
-        "domain_suffix": [
-          "gpt.ge",
-          "iplaysoft.com",
-          "appinn.com"
-        ],
+        "domain_suffix": ["gpt.ge", "iplaysoft.com", "appinn.com"],
         "outbound": "direct"
       }
     ],
