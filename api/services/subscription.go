@@ -7,7 +7,7 @@ import (
 	"github.com/daifiyum/cat-box/database"
 	"github.com/daifiyum/cat-box/database/models"
 	"github.com/daifiyum/cat-box/parser"
-	"github.com/daifiyum/cat-box/singbox"
+	S "github.com/daifiyum/cat-box/sing-box"
 )
 
 func GetAllSubscriptions() ([]models.Subscriptions, error) {
@@ -21,7 +21,8 @@ func GetAllSubscriptions() ([]models.Subscriptions, error) {
 
 func CreateSubscription(subscribe *models.Subscriptions) error {
 	db := database.DBConn
-	res, err := parser.Parser(subscribe.Link, subscribe.UserAgent)
+
+	res, err := parser.Parser(subscribe.Link, U.DefaultUserAgent)
 	if err != nil {
 		return err
 	}
@@ -29,6 +30,7 @@ func CreateSubscription(subscribe *models.Subscriptions) error {
 	db.Model(subscribe).Select("MAX(sort_order)").Scan(&maxSortOrder)
 	subscribe.UpdatedTime = time.Now()
 	subscribe.Data = res
+	subscribe.UserAgent = U.DefaultUserAgent
 	subscribe.SortOrder = maxSortOrder + 1
 	return db.Create(&subscribe).Error
 }
@@ -62,12 +64,12 @@ func ActivateSubscription(id string) error {
 		return err
 	}
 
-	if err := singbox.SwitchProxyMode(U.IsTun.Get()); err != nil {
+	if err := S.SwitchProxyMode(U.IsTun.Get()); err != nil {
 		return err
 	}
 
 	if U.IsCoreRunning.Get() {
-		return singbox.Start()
+		return S.Start()
 	}
 
 	return nil
@@ -93,12 +95,12 @@ func UpdateSubscription(id string) error {
 	}
 
 	if subscribe.Active {
-		err := singbox.SwitchProxyMode(U.IsTun.Get())
+		err := S.SwitchProxyMode(U.IsTun.Get())
 		if err != nil {
 			return err
 		}
 		if U.IsCoreRunning.Get() {
-			return singbox.Start()
+			return S.Start()
 		}
 	}
 

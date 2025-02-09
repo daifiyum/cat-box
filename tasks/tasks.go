@@ -8,7 +8,7 @@ import (
 	"github.com/daifiyum/cat-box/database"
 	"github.com/daifiyum/cat-box/database/models"
 	"github.com/daifiyum/cat-box/parser"
-	"github.com/daifiyum/cat-box/singbox"
+	S "github.com/daifiyum/cat-box/sing-box"
 	"github.com/daifiyum/cat-box/tasks/every"
 )
 
@@ -29,7 +29,7 @@ func UpdateDelay(interval string) {
 func getUpdateDelay() string {
 	db := database.DBConn
 	setting := new(models.Setting)
-	db.Where("key = ?", "update_delay").First(setting)
+	db.Where("label = ?", "update_interval").First(setting)
 	return setting.Value
 }
 
@@ -57,12 +57,12 @@ func updateSubscriptions() {
 		db.Save(&updates)
 	}
 	if isActive {
-		err := singbox.SwitchProxyMode(U.IsTun.Get())
+		err := S.SwitchProxyMode(U.IsTun.Get())
 		if err != nil {
 			log.Println(err)
 		}
 		if U.IsCoreRunning.Get() {
-			singbox.Start()
+			S.Start()
 		}
 	}
 }

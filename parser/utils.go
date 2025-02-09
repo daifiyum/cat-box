@@ -12,17 +12,7 @@ import (
 	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
-func userAgent(ua string) string {
-	switch ua {
-	case "sing-box":
-		return "sing-box"
-	case "native":
-		return "native"
-	}
-	return ""
-}
-
-func httpGet(url, user_agent string, timeout time.Duration) (string, error) {
+func httpGet(url, ua string, timeout time.Duration) (string, error) {
 	var client fasthttp.Client
 
 	if U.IsCoreRunning.Get() {
@@ -39,11 +29,6 @@ func httpGet(url, user_agent string, timeout time.Duration) (string, error) {
 
 	req.SetRequestURI(url)
 	req.Header.SetMethod("GET")
-
-	ua := userAgent(user_agent)
-	if ua == "" {
-		return "", fmt.Errorf("user-agent not set")
-	}
 	req.Header.Set("User-Agent", ua)
 
 	if err := client.DoTimeout(req, resp, timeout); err != nil {

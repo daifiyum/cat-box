@@ -5,6 +5,7 @@ import (
 
 	"github.com/daifiyum/cat-box/database/models"
 
+	U "github.com/daifiyum/cat-box/config"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
@@ -25,8 +26,32 @@ func Init() error {
 	settings := &[]models.Setting{}
 	DBConn.Find(settings)
 	if len(*settings) == 0 {
-		settings = &[]models.Setting{{Key: "update_delay", Value: "30m"}, {Key: "default_user_agent", Value: "sing-box"}}
+		settings = &[]models.Setting{
+			{
+				Label:       "update_interval",
+				Type:        "text",
+				Value:       "30m",
+				Description: "更新间隔",
+			},
+			{
+				Label:       "user_agent_type",
+				Type:        "select",
+				Value:       "sing-box",
+				Options:     `["sing-box", "v2ray"]`,
+				Description: "默认User-Agent类型",
+			},
+		}
 		DBConn.Create(settings)
+	}
+
+	// apply settings
+	if len(*settings) != 0 {
+		for _, setting := range *settings {
+			switch setting.Label {
+			case "user_agent_type":
+				U.DefaultUserAgent = setting.Value
+			}
+		}
 	}
 
 	return nil

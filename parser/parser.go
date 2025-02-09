@@ -6,38 +6,39 @@ import (
 	"log"
 	"time"
 
-	"github.com/daifiyum/cat-box/parser/native"
-	"github.com/daifiyum/cat-box/parser/singbox"
+	U "github.com/daifiyum/cat-box/config"
+	C "github.com/daifiyum/cat-box/parser/sing-box"
+	"github.com/daifiyum/cat-box/parser/v2ray"
 )
 
 // 订阅解析，输出为json格式出站
-func Parser(url, user_agent string) (string, error) {
-	resp, err := httpGet(url, user_agent, 10*time.Second)
+func Parser(url, ua string) (string, error) {
+	resp, err := httpGet(url, ua, 10*time.Second)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch URL: %w", err)
 	}
 
 	var outbounds any
 
-	switch user_agent {
+	switch ua {
 	case "sing-box":
-		outbounds, err = singbox.CutOutbounds(resp)
+		outbounds, err = C.CutOutbounds(resp)
 		if err != nil {
 			return "", fmt.Errorf("failed to parse sing-box outbounds: %w", err)
 		}
-	case "native":
+	case "v2ray":
 		safeData, err := base64URLSafe(resp)
 		if err != nil {
 			return "", fmt.Errorf("failed to decode base64: %w", err)
 		}
-		outboundsRaw, err := native.NewNativeURIParser(safeData)
+		outboundsRaw, err := v2ray.NewNativeURIParser(safeData)
 		if err != nil {
 			log.Println("native parser error:", err)
 			return "", fmt.Errorf("failed to parse native outbounds: %w", err)
 		}
 		outbounds = badOutbounds(outboundsRaw)
 	default:
-		return "", fmt.Errorf("unsupported source: %s", user_agent)
+		return "", fmt.Errorf("unsupported source: %s", U.DefaultUserAgent)
 	}
 
 	outboundsJson, err := json.Marshal(outbounds)

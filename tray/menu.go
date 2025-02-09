@@ -6,7 +6,7 @@ import (
 	"github.com/daifiyum/cat-box/app"
 	W "github.com/daifiyum/cat-box/app/windows"
 	U "github.com/daifiyum/cat-box/config"
-	S "github.com/daifiyum/cat-box/singbox"
+	S "github.com/daifiyum/cat-box/sing-box"
 )
 
 func Menu(app *app.App) *W.Menu {

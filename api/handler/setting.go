@@ -25,15 +25,15 @@ func GetSetting(c *fiber.Ctx) error {
 
 // 更新指定的设置项
 func UpdateSetting(c *fiber.Ctx) error {
-	var settings []models.Setting
-	if err := c.BodyParser(&settings); err != nil {
+	var setting models.Setting
+	if err := c.BodyParser(&setting); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":  "error",
 			"message": "Invalid request body",
 		})
 	}
 
-	if err := services.UpdateSetting(settings); err != nil {
+	if err := services.UpdateSetting(setting); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
 			"message": err.Error(),

@@ -7,7 +7,7 @@ import (
 	"github.com/daifiyum/cat-box/app"
 	"github.com/daifiyum/cat-box/database"
 	"github.com/daifiyum/cat-box/setup"
-	S "github.com/daifiyum/cat-box/singbox"
+	S "github.com/daifiyum/cat-box/sing-box"
 	"github.com/daifiyum/cat-box/tasks"
 	"github.com/daifiyum/cat-box/tray"
 )

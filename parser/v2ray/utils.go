@@ -1,4 +1,4 @@
-package native
+package v2ray
 
 import (
 	"encoding/base64"
