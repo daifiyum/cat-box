@@ -3,7 +3,7 @@ package watcher
 import (
 	"fmt"
 
-	U "github.com/daifiyum/cat-box/config"
+	U "github.com/daifiyum/cat-box/common"
 	"github.com/daifiyum/cat-box/database/models"
 	"github.com/daifiyum/cat-box/tasks"
 )

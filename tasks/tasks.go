@@ -4,11 +4,11 @@ import (
 	"log"
 	"time"
 
-	U "github.com/daifiyum/cat-box/config"
+	U "github.com/daifiyum/cat-box/common"
 	"github.com/daifiyum/cat-box/database"
 	"github.com/daifiyum/cat-box/database/models"
-	"github.com/daifiyum/cat-box/parser"
-	S "github.com/daifiyum/cat-box/sing-box"
+	S "github.com/daifiyum/cat-box/singbox"
+	P "github.com/daifiyum/cat-box/subscription"
 	"github.com/daifiyum/cat-box/tasks/every"
 )
 
@@ -41,7 +41,7 @@ func updateSubscriptions() {
 	var isActive bool
 	for _, subscription := range subscriptions {
 		if subscription.AutoUpdate {
-			r, err := parser.Parser(subscription.Link, subscription.UserAgent)
+			r, err := P.Subscription(subscription.Link, subscription.UserAgent)
 			if err != nil {
 				continue
 			}

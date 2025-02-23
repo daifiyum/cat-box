@@ -3,11 +3,11 @@ package services
 import (
 	"time"
 
-	U "github.com/daifiyum/cat-box/config"
+	U "github.com/daifiyum/cat-box/common"
 	"github.com/daifiyum/cat-box/database"
 	"github.com/daifiyum/cat-box/database/models"
-	"github.com/daifiyum/cat-box/parser"
-	S "github.com/daifiyum/cat-box/sing-box"
+	S "github.com/daifiyum/cat-box/singbox"
+	P "github.com/daifiyum/cat-box/subscription"
 )
 
 func GetAllSubscriptions() ([]models.Subscriptions, error) {
@@ -22,7 +22,7 @@ func GetAllSubscriptions() ([]models.Subscriptions, error) {
 func CreateSubscription(subscribe *models.Subscriptions) error {
 	db := database.DBConn
 
-	res, err := parser.Parser(subscribe.Link, U.DefaultUserAgent)
+	res, err := P.Subscription(subscribe.Link, U.DefaultUserAgent)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func UpdateSubscription(id string) error {
 		return err
 	}
 
-	res, err := parser.Parser(subscribe.Link, subscribe.UserAgent)
+	res, err := P.Subscription(subscribe.Link, subscribe.UserAgent)
 	if err != nil {
 		return err
 	}

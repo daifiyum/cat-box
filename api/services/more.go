@@ -1,7 +1,7 @@
 package services
 
 import (
-	U "github.com/daifiyum/cat-box/config"
+	U "github.com/daifiyum/cat-box/common"
 	"github.com/gofiber/contrib/websocket"
 )
 

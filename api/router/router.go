@@ -8,7 +8,7 @@ import (
 
 func SetupRoutes(app *fiber.App) {
 	// webui
-	app.Static("/", "./resources/ui/sub")
+	app.Static("/", "./resources/ui/subscription")
 
 	// api
 	api := app.Group("/api")

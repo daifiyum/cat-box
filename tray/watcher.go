@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/daifiyum/cat-box/app"
-	U "github.com/daifiyum/cat-box/config"
-	S "github.com/daifiyum/cat-box/sing-box"
+	U "github.com/daifiyum/cat-box/common"
+	S "github.com/daifiyum/cat-box/singbox"
 )
 
 // 监控托盘

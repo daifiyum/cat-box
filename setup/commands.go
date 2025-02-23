@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	U "github.com/daifiyum/cat-box/config"
+	U "github.com/daifiyum/cat-box/common"
 )
 
 // cat-box.exe -workspace=true

@@ -7,7 +7,7 @@ import (
 	"github.com/daifiyum/cat-box/app"
 	"github.com/daifiyum/cat-box/database"
 	"github.com/daifiyum/cat-box/setup"
-	S "github.com/daifiyum/cat-box/sing-box"
+	S "github.com/daifiyum/cat-box/singbox"
 	"github.com/daifiyum/cat-box/tasks"
 	"github.com/daifiyum/cat-box/tray"
 )
@@ -34,6 +34,6 @@ func main() {
 	})
 
 	if err := app.Run(); err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 }

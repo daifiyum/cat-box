@@ -5,7 +5,7 @@ import (
 
 	"github.com/daifiyum/cat-box/database/models"
 
-	U "github.com/daifiyum/cat-box/config"
+	U "github.com/daifiyum/cat-box/common"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )

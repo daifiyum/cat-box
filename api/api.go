@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/daifiyum/cat-box/api/router"
-	U "github.com/daifiyum/cat-box/config"
+	U "github.com/daifiyum/cat-box/common"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 
 	"github.com/gofiber/fiber/v2"
