@@ -6,14 +6,14 @@ import (
 	"github.com/daifiyum/cat-box/api"
 	"github.com/daifiyum/cat-box/app"
 	"github.com/daifiyum/cat-box/database"
-	"github.com/daifiyum/cat-box/setup"
+	I "github.com/daifiyum/cat-box/initializer"
 	S "github.com/daifiyum/cat-box/singbox"
 	"github.com/daifiyum/cat-box/tasks"
 	"github.com/daifiyum/cat-box/tray"
 )
 
 func init() {
-	setup.Do()
+	I.Initialize()
 }
 
 func main() {

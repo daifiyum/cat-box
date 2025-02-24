@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime"
 	"syscall"
 	"unsafe"
@@ -44,29 +45,48 @@ func New(t, i string) *App {
 
 // Run
 func (t *App) Run() error {
-	// 设置进程 DPI 感知
+	if err := t.SetAumid(); err != nil {
+		return err
+	}
+
 	if err := t.setProcessDPIAware(); err != nil {
 		return err
 	}
 
-	// 注册窗口类
 	if err := t.registerWindowClass(); err != nil {
 		return err
 	}
 
-	// 创建窗口
 	if err := t.createWindow(); err != nil {
 		return err
 	}
 
-	// 初始化托盘图标
 	if err := t.initTrayIcon(); err != nil {
 		return err
 	}
 
-	// 消息循环
 	if err := t.messageLoop(); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// 设置 AUMID
+func (t *App) SetAumid() error {
+	iconURL, err := filepath.Abs(t.icon)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for icon: %w", err)
+	}
+
+	err = W.RegisterAUMID(t.tooltip, t.tooltip, iconURL)
+	if err != nil {
+		return fmt.Errorf("failed to register AUMID: %w", err)
+	}
+
+	err = W.SetAUMID(t.tooltip)
+	if err != nil {
+		return fmt.Errorf("failed to set AUMID: %w", err)
 	}
 
 	return nil
@@ -91,7 +111,7 @@ func (t *App) messageLoop() error {
 	}
 }
 
-// 设置为进程 DPI 感知
+// 设置进程 DPI 感知
 func (t *App) setProcessDPIAware() error {
 	status, _, err := W.SetProcessDPIAware.Call()
 	if status == 0 {
