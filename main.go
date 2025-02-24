@@ -5,11 +5,11 @@ import (
 
 	"github.com/daifiyum/cat-box/api"
 	"github.com/daifiyum/cat-box/app"
+	"github.com/daifiyum/cat-box/app/tray"
 	"github.com/daifiyum/cat-box/database"
 	I "github.com/daifiyum/cat-box/initializer"
 	S "github.com/daifiyum/cat-box/singbox"
 	"github.com/daifiyum/cat-box/tasks"
-	"github.com/daifiyum/cat-box/tray"
 )
 
 func init() {
