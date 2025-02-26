@@ -19,14 +19,14 @@ func init() {
 func main() {
 	app := app.New("cat-box", "./resources/icons/box.ico")
 
-	app.Click(func() {
+	app.SetOnLeftClick(func() {
 		S.SwitchCore()
 	})
 
 	menu := tray.Menu(app)
 	app.SetMenu(menu)
 
-	app.Ready(func() {
+	app.SetOnInitialize(func() {
 		database.Init()
 		tasks.Run()
 		tray.Watcher(app)
