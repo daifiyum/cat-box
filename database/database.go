@@ -37,7 +37,7 @@ func Init() error {
 				Label:       "user_agent_type",
 				Type:        "select",
 				Value:       "sing-box",
-				Options:     `["sing-box", "v2ray"]`,
+				Options:     `["sing-box", "clash"]`,
 				Description: "默认User-Agent类型",
 			},
 		}
