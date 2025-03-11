@@ -31,7 +31,7 @@ func Subscription(url, ua string) (string, error) {
 		}
 		return string(outboundsJson), nil
 	case "clash":
-		outbounds, err := clash.ParseClashSubscription(content)
+		outbounds, err := clash.ParseClashSubscription(context.Background(), content)
 		if err != nil {
 			return "", fmt.Errorf("failed to parse sing-box outbounds: %w", err)
 		}
