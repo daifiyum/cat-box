@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	U "github.com/daifiyum/cat-box/common"
 	"github.com/daifiyum/cat-box/subscription/clash"
 	C "github.com/daifiyum/cat-box/subscription/singbox"
 	"github.com/sagernet/sing/common/json/badjson"
@@ -33,7 +32,7 @@ func Subscription(url, ua string) (string, error) {
 	case "clash":
 		outbounds, err := clash.ParseClashSubscription(context.Background(), content)
 		if err != nil {
-			return "", fmt.Errorf("failed to parse sing-box outbounds: %w", err)
+			return "", fmt.Errorf("failed to parse clash outbounds: %w", err)
 		}
 		outboundsJson, err := badjson.MarshallObjectsContext(context.Background(), outbounds)
 		if err != nil {
@@ -41,6 +40,6 @@ func Subscription(url, ua string) (string, error) {
 		}
 		return string(outboundsJson), nil
 	default:
-		return "", fmt.Errorf("unsupported ua: %s", U.DefaultUserAgent)
+		return "", fmt.Errorf("unsupported ua: %s", ua)
 	}
 }

@@ -112,7 +112,11 @@ func ParseClashSubscription(_ context.Context, content string) ([]option.Outboun
 				Network:   clashNetworks(trojanOption.UDP),
 			}
 		}
-		outbounds = append(outbounds, outbound)
+
+		// Unsupported protocol outbound.Options are nil.
+		if outbound.Options != nil {
+			outbounds = append(outbounds, outbound)
+		}
 	}
 	if len(outbounds) > 0 {
 		return outbounds, nil

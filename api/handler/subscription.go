@@ -36,6 +36,7 @@ func CreateSubscribe(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
 			"message": "Failed to create subscription",
+			"error":   err.Error(),
 		})
 	}
 	return c.JSON(fiber.Map{
