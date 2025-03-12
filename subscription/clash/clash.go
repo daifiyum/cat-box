@@ -3,7 +3,9 @@ package clash
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+	"unicode"
 
 	O "github.com/daifiyum/cat-box/subscription/clash/outbound"
 	"github.com/daifiyum/cat-box/subscription/clash/structure"
@@ -111,9 +113,99 @@ func ParseClashSubscription(_ context.Context, content string) ([]option.Outboun
 				Transport: clashTransport(trojanOption.Network, O.HTTPOptions{}, O.HTTP2Options{}, trojanOption.GrpcOpts, trojanOption.WSOpts),
 				Network:   clashNetworks(trojanOption.UDP),
 			}
+		case "hysteria":
+			hysteriaOption := &O.HysteriaOption{}
+			err = decoder.Decode(proxyMapping, hysteriaOption)
+			if err != nil {
+				return nil, err
+			}
+			outbound.Type = C.TypeHysteria
+			outbound.Options = &option.HysteriaOutboundOptions{
+				ServerOptions: option.ServerOptions{
+					Server:     hysteriaOption.Server,
+					ServerPort: uint16(hysteriaOption.Port),
+				},
+				Up:                  hyBandwidth(hysteriaOption.Up),
+				Down:                hyBandwidth(hysteriaOption.Down),
+				Obfs:                hysteriaOption.Obfs,
+				AuthString:          hysteriaOption.AuthString,
+				ReceiveWindowConn:   uint64(hysteriaOption.ReceiveWindowConn),
+				ReceiveWindow:       uint64(hysteriaOption.ReceiveWindow),
+				DisableMTUDiscovery: hysteriaOption.DisableMTUDiscovery,
+				OutboundTLSOptionsContainer: option.OutboundTLSOptionsContainer{
+					TLS: &option.OutboundTLSOptions{
+						Enabled:    true,
+						ALPN:       hysteriaOption.ALPN,
+						ServerName: hysteriaOption.SNI,
+						Insecure:   hysteriaOption.SkipCertVerify,
+					},
+				},
+			}
+		case "hysteria2":
+			hysteria2Option := &O.Hysteria2Option{}
+			err = decoder.Decode(proxyMapping, hysteria2Option)
+			if err != nil {
+				return nil, err
+			}
+			outbound.Type = C.TypeHysteria2
+			outbound.Options = &option.Hysteria2OutboundOptions{
+				ServerOptions: option.ServerOptions{
+					Server:     hysteria2Option.Server,
+					ServerPort: uint16(hysteria2Option.Port),
+				},
+				UpMbps:   hy2Bandwidth(hysteria2Option.Up),
+				DownMbps: hy2Bandwidth(hysteria2Option.Down),
+				Obfs: &option.Hysteria2Obfs{
+					Type:     hysteria2Option.Obfs,
+					Password: hysteria2Option.ObfsPassword,
+				},
+				Password: hysteria2Option.Password,
+				OutboundTLSOptionsContainer: option.OutboundTLSOptionsContainer{
+					TLS: &option.OutboundTLSOptions{
+						Enabled:    true,
+						ALPN:       hysteria2Option.ALPN,
+						ServerName: hysteria2Option.SNI,
+						Insecure:   hysteria2Option.SkipCertVerify,
+					},
+				},
+			}
+		case "vless":
+			vlessOption := &O.VlessOption{}
+			err = decoder.Decode(proxyMapping, vlessOption)
+			if err != nil {
+				return nil, err
+			}
+			outbound.Type = C.TypeVLESS
+			outbound.Options = &option.VLESSOutboundOptions{
+				ServerOptions: option.ServerOptions{
+					Server:     vlessOption.Server,
+					ServerPort: uint16(vlessOption.Port),
+				},
+				UUID:    vlessOption.UUID,
+				Flow:    vlessOption.Flow,
+				Network: clashNetworks(vlessOption.UDP),
+				OutboundTLSOptionsContainer: option.OutboundTLSOptionsContainer{
+					TLS: &option.OutboundTLSOptions{
+						Enabled:    vlessOption.TLS,
+						ALPN:       vlessOption.ALPN,
+						ServerName: vlessOption.ServerName,
+						Insecure:   vlessOption.SkipCertVerify,
+						Reality: &option.OutboundRealityOptions{
+							Enabled:   isRealityOptionsValid(vlessOption.RealityOpts),
+							PublicKey: vlessOption.RealityOpts.PublicKey,
+							ShortID:   vlessOption.RealityOpts.ShortID,
+						},
+						UTLS: &option.OutboundUTLSOptions{
+							Enabled:     vlessOption.ClientFingerprint != "",
+							Fingerprint: vlessOption.ClientFingerprint,
+						},
+					},
+				},
+				Transport: clashTransport(vlessOption.Network, vlessOption.HTTPOpts, vlessOption.HTTP2Opts, vlessOption.GrpcOpts, vlessOption.WSOpts),
+			}
 		}
 
-		// Unsupported protocol outbound.Options are nil.
+		// Filter unsupported protocols
 		if outbound.Options != nil {
 			outbounds = append(outbounds, outbound)
 		}
@@ -235,4 +327,54 @@ func clashStringList(list []string) string {
 		return list[0]
 	}
 	return ""
+}
+
+func hyBandwidth(v string) string {
+	for _, r := range v {
+		if unicode.IsLetter(r) {
+			return v
+		}
+	}
+	return v + " Mbps"
+}
+
+func hy2Bandwidth(input string) int {
+	parts := strings.Fields(input)
+	if len(parts) == 0 {
+		return 0
+	}
+
+	num, err := strconv.ParseFloat(parts[0], 64)
+	if err != nil {
+		return 0
+	}
+
+	if len(parts) == 1 {
+		return int(num)
+	}
+
+	unit := parts[1]
+
+	conversion := map[string]float64{
+		"bps":  1.0 / 1_000_000,
+		"Bps":  8.0 / 1_000_000,
+		"Kbps": 1.0 / 1_000,
+		"KBps": 8.0 / 1_000,
+		"Mbps": 1,
+		"MBps": 8,
+		"Gbps": 1_000,
+		"GBps": 8_000,
+		"Tbps": 1_000_000,
+		"TBps": 8_000_000,
+	}
+
+	if factor, exists := conversion[unit]; exists {
+		return int(num * factor)
+	}
+
+	return int(num)
+}
+
+func isRealityOptionsValid(opts O.RealityOptions) bool {
+	return opts.PublicKey != "" && opts.ShortID != ""
 }
