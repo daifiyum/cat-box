@@ -86,8 +86,9 @@ func ParseClashSubscription(_ context.Context, content string) ([]option.Outboun
 						Insecure:   vmessOption.SkipCertVerify,
 					},
 				},
-				Transport: clashTransport(vmessOption.Network, vmessOption.HTTPOpts, vmessOption.HTTP2Opts, vmessOption.GrpcOpts, vmessOption.WSOpts),
-				Network:   clashNetworks(vmessOption.UDP),
+				Transport:      clashTransport(vmessOption.Network, vmessOption.HTTPOpts, vmessOption.HTTP2Opts, vmessOption.GrpcOpts, vmessOption.WSOpts),
+				Network:        clashNetworks(vmessOption.UDP),
+				PacketEncoding: vmessOption.PacketEncoding,
 			}
 		case "trojan":
 			trojanOption := &O.TrojanOption{}
@@ -201,7 +202,8 @@ func ParseClashSubscription(_ context.Context, content string) ([]option.Outboun
 						},
 					},
 				},
-				Transport: clashTransport(vlessOption.Network, vlessOption.HTTPOpts, vlessOption.HTTP2Opts, vlessOption.GrpcOpts, vlessOption.WSOpts),
+				Transport:      clashTransport(vlessOption.Network, vlessOption.HTTPOpts, vlessOption.HTTP2Opts, vlessOption.GrpcOpts, vlessOption.WSOpts),
+				PacketEncoding: vlessPacketEncoding(vlessOption.PacketEncoding),
 			}
 		}
 
@@ -386,4 +388,13 @@ func hy2Bandwidth(v string) int {
 
 func isRealityOptionsValid(opts O.RealityOptions) bool {
 	return opts.PublicKey != "" && opts.ShortID != ""
+}
+
+// sing-box values: "", "xudp", "packetaddr" default value: nil, ==> "xudp"
+// clash    values: "", "xudp", "packetaddr" default value: "", ==> off
+func vlessPacketEncoding(v string) *string {
+	if v == "" {
+		return nil // Force to default value
+	}
+	return &v
 }
