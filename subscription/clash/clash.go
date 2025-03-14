@@ -338,8 +338,8 @@ func hyBandwidth(v string) string {
 	return v + " Mbps"
 }
 
-func hy2Bandwidth(input string) int {
-	parts := strings.Fields(input)
+func hy2Bandwidth(v string) int {
+	parts := strings.Fields(v)
 	if len(parts) == 0 {
 		return 0
 	}
@@ -355,24 +355,33 @@ func hy2Bandwidth(input string) int {
 
 	unit := parts[1]
 
-	conversion := map[string]float64{
-		"bps":  1.0 / 1_000_000,
-		"Bps":  8.0 / 1_000_000,
-		"Kbps": 1.0 / 1_000,
-		"KBps": 8.0 / 1_000,
-		"Mbps": 1,
-		"MBps": 8,
-		"Gbps": 1_000,
-		"GBps": 8_000,
-		"Tbps": 1_000_000,
-		"TBps": 8_000_000,
+	var factor float64
+	switch unit {
+	case "bps":
+		factor = 1.0 / 1_000_000
+	case "Bps":
+		factor = 8.0 / 1_000_000
+	case "Kbps":
+		factor = 1.0 / 1_000
+	case "KBps":
+		factor = 8.0 / 1_000
+	case "Mbps":
+		factor = 1
+	case "MBps":
+		factor = 8
+	case "Gbps":
+		factor = 1_000
+	case "GBps":
+		factor = 8_000
+	case "Tbps":
+		factor = 1_000_000
+	case "TBps":
+		factor = 8_000_000
+	default:
+		return int(num)
 	}
 
-	if factor, exists := conversion[unit]; exists {
-		return int(num * factor)
-	}
-
-	return int(num)
+	return int(num * factor)
 }
 
 func isRealityOptionsValid(opts O.RealityOptions) bool {
