@@ -7,6 +7,7 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
+	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -141,5 +142,25 @@ func SetAUMID(aumid string) error {
 	if r1 != 0 {
 		return fmt.Errorf("SetCurrentProcessExplicitAppUserModelID failed: %v", err)
 	}
+	return nil
+}
+
+// 通过发送CTRL_BREAK_EVENT来终止进程
+func TerminateProc(pid int) error {
+	ret, _, err := AttachConsole.Call(uintptr(pid))
+	if ret == 0 && err != syscall.ERROR_ACCESS_DENIED {
+		return err
+	}
+
+	ret, _, err = SetConsoleCtrlHandler.Call(0, uintptr(1))
+	if ret == 0 {
+		return err
+	}
+
+	ret, _, err = GenerateConsoleCtrlEvent.Call(windows.CTRL_BREAK_EVENT, uintptr(pid))
+	if ret == 0 {
+		return err
+	}
+
 	return nil
 }

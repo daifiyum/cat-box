@@ -7,6 +7,7 @@ import (
 	"sync"
 	"syscall"
 
+	W "github.com/daifiyum/cat-box/app/windows"
 	U "github.com/daifiyum/cat-box/common"
 	"golang.org/x/sys/windows"
 )
@@ -64,53 +65,18 @@ func Start() error {
 }
 
 func Stop() error {
-	// cmd未初始化或cmd.Start()出错，此时cmd和cmd.Process为空，则一定没有子进程
+	// cmd未初始化或cmd.Start()出错，cmd和cmd.Process为空，则没有子进程
 	if cmd == nil || cmd.Process == nil {
 		return nil
 	}
 	if U.IsCoreRunning.Get() {
-		err := terminateProc(cmd.Process.Pid)
+		err := W.TerminateProc(cmd.Process.Pid)
 		if err != nil {
 			log.Println(err)
 			return err
 		}
 	}
 	wg.Wait()
-	return nil
-}
-
-func terminateProc(pid int) error {
-	dll, err := windows.LoadDLL("kernel32.dll")
-	if err != nil {
-		return err
-	}
-	defer dll.Release()
-
-	f, err := dll.FindProc("AttachConsole")
-	if err != nil {
-		return err
-	}
-	r1, _, err := f.Call(uintptr(pid))
-	if r1 == 0 && err != syscall.ERROR_ACCESS_DENIED {
-		return err
-	}
-
-	f, err = dll.FindProc("SetConsoleCtrlHandler")
-	if err != nil {
-		return err
-	}
-	r1, _, err = f.Call(0, 1)
-	if r1 == 0 {
-		return err
-	}
-	f, err = dll.FindProc("GenerateConsoleCtrlEvent")
-	if err != nil {
-		return err
-	}
-	r1, _, err = f.Call(windows.CTRL_BREAK_EVENT, uintptr(pid))
-	if r1 == 0 {
-		return err
-	}
 	return nil
 }
 

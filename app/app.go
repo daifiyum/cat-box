@@ -61,6 +61,11 @@ func (t *App) Run() error {
 		return err
 	}
 
+	handle, _, err := W.CreateJobObjectA.Call(0, 0)
+	if handle == 0 {
+		return fmt.Errorf("CreateJobObjectA failed: %v", err)
+	}
+
 	if err := t.addTrayIcon(); err != nil {
 		return err
 	}

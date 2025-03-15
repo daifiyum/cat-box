@@ -6,8 +6,14 @@ import (
 
 var (
 	// kernel32
-	kernel32        = syscall.MustLoadDLL("kernel32")
-	GetModuleHandle = kernel32.MustFindProc("GetModuleHandleW")
+	kernel32                 = syscall.MustLoadDLL("kernel32")
+	GetModuleHandle          = kernel32.MustFindProc("GetModuleHandleW")
+	CreateJobObjectA         = kernel32.MustFindProc("CreateJobObjectA")
+	AssignProcessToJobObject = kernel32.MustFindProc("AssignProcessToJobObject")
+	// terminateProc
+	AttachConsole            = kernel32.MustFindProc("AttachConsole")
+	SetConsoleCtrlHandler    = kernel32.MustFindProc("SetConsoleCtrlHandler")
+	GenerateConsoleCtrlEvent = kernel32.MustFindProc("GenerateConsoleCtrlEvent")
 
 	// user32
 	user32              = syscall.MustLoadDLL("user32.dll")
