@@ -12,207 +12,285 @@ import (
 	"github.com/daifiyum/cat-box/database/models"
 )
 
-const (
-	templatePath   = "./resources/template/template.json"
-	coreConfigPath = "./resources/core/config.json"
-)
+type ConfigurationError struct {
+	Context string
+	Err     error
+}
 
-// 初始化配置函数，生成默认配置模板，并提取必要配置传给公共变量BoxConfig
+func (e *ConfigurationError) Error() string {
+	return fmt.Sprintf("%s: %v", e.Context, e.Err)
+}
+
+func (e *ConfigurationError) Unwrap() error {
+	return e.Err
+}
+
 func InitConfig() (map[string]any, error) {
 	template, err := ReadTemplate()
 	if err != nil {
-		return nil, err
+		return nil, &ConfigurationError{"读取模板失败", err}
 	}
 
 	var templateMap map[string]any
-	err = json.Unmarshal(template, &templateMap)
-	if err != nil {
+	if err = json.Unmarshal(template, &templateMap); err != nil {
+		return nil, &ConfigurationError{"解析模板失败", err}
+	}
+
+	if err = processExperimentalConfig(templateMap); err != nil {
 		return nil, err
 	}
 
-	/*
-		experimental默认处理
-	*/
-	experiments := templateMap["experimental"].(map[string]any)
-	// 读取clash api端口
-	clashAPI := experiments["clash_api"].(map[string]any)
-	externalController, ok := clashAPI["external_controller"].(string)
-	if !ok {
-		return nil, fmt.Errorf("external_controller 配置不存在或格式错误")
+	if err = processInboundsConfig(templateMap); err != nil {
+		return nil, err
 	}
-	clashAPIPort := strings.Split(externalController, ":")[1]
-	U.Box.ClashAPIPort = clashAPIPort
-
-	/*
-		inbounds默认处理
-	*/
-	inbounds, _ := templateMap["inbounds"].([]any)
-	inboundsIndex := []int{}
-	for i := range inbounds {
-		inbound := inbounds[i].(map[string]any)
-		if inbound["type"].(string) == "mixed" {
-			inbound["set_system_proxy"] = true
-			U.Box.MixedListenPort = fmt.Sprintf("%.0f", inbound["listen_port"].(float64))
-		}
-
-		// 删除tun入站
-		if inbound["type"].(string) == "tun" {
-			inboundsIndex = append(inboundsIndex, i)
-			U.Box.TunInbound = inbound
-		}
-	}
-
-	// 根据收集的索引删除不需要的入站
-	for i := len(inboundsIndex) - 1; i >= 0; i-- {
-		indexToRemove := inboundsIndex[i]
-		inbounds = append(inbounds[:indexToRemove], inbounds[indexToRemove+1:]...)
-	}
-
-	// 将修改后的入站覆写给模板入站
-	templateMap["inbounds"] = inbounds
 
 	return templateMap, nil
 }
 
-// 将初始化后的配置模板与传入的部分配置合并
+func processExperimentalConfig(templateMap map[string]any) error {
+	experiments, ok := templateMap["experimental"].(map[string]any)
+	if !ok {
+		return &ConfigurationError{"配置错误", fmt.Errorf("experimental 字段缺失或类型错误")}
+	}
+
+	clashAPI, ok := experiments["clash_api"].(map[string]any)
+	if !ok {
+		return &ConfigurationError{"配置错误", fmt.Errorf("clash_api 字段缺失或类型错误")}
+	}
+
+	controller, ok := clashAPI["external_controller"].(string)
+	if !ok {
+		return &ConfigurationError{"配置错误", fmt.Errorf("external_controller 字段缺失或类型错误")}
+	}
+
+	parts := strings.Split(controller, ":")
+	if len(parts) < 2 {
+		return &ConfigurationError{"配置错误", fmt.Errorf("invalid external_controller format")}
+	}
+	U.Box.ClashAPIPort = parts[1]
+	return nil
+}
+
+func processInboundsConfig(templateMap map[string]any) error {
+	inbounds, ok := templateMap["inbounds"].([]any)
+	if !ok {
+		return &ConfigurationError{"配置错误", fmt.Errorf("inbounds 字段缺失或类型错误")}
+	}
+
+	var validInbounds []any
+	var tunInbound map[string]any
+
+	for _, item := range inbounds {
+		inbound, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		switch inbound["type"] {
+		case "mixed":
+			if err := processMixedInbound(inbound); err != nil {
+				return err
+			}
+			validInbounds = append(validInbounds, inbound)
+		case "tun":
+			tunInbound = inbound
+		default:
+			validInbounds = append(validInbounds, inbound)
+		}
+	}
+
+	U.Box.TunInbound = tunInbound
+	templateMap["inbounds"] = validInbounds
+	return nil
+}
+
+func processMixedInbound(inbound map[string]any) error {
+	port, ok := inbound["listen_port"].(float64)
+	if !ok {
+		return &ConfigurationError{"配置错误", fmt.Errorf("mixed 入站缺少 listen_port")}
+	}
+
+	inbound["set_system_proxy"] = true
+	U.Box.MixedListenPort = fmt.Sprintf("%.0f", port)
+	return nil
+}
+
 func OutboundsConfig(templateMap map[string]any, outbounds []byte) (map[string]any, error) {
 	var outboundsSlice []any
-	err := json.Unmarshal(outbounds, &outboundsSlice)
+	if err := json.Unmarshal(outbounds, &outboundsSlice); err != nil {
+		return nil, &ConfigurationError{"解析出站配置失败", err}
+	}
+
+	tags, err := extractOutboundTags(outboundsSlice)
 	if err != nil {
 		return nil, err
 	}
 
-	outboundTags := []any{}
-	for _, outboundAny := range outboundsSlice {
-		outboundMap := outboundAny.(map[string]any)
-		outboundTags = append(outboundTags, outboundMap["tag"])
+	if err := updateTemplateOutbounds(templateMap, tags); err != nil {
+		return nil, err
 	}
 
-	templateOutbounds, _ := templateMap["outbounds"].([]any)
-	for i := range templateOutbounds {
-		templateOutbound := templateOutbounds[i].(map[string]any)
-		t := templateOutbound["type"].(string)
-		if t == "selector" || t == "urltest" {
-			templateOutbound["outbounds"] = append(templateOutbound["outbounds"].([]any), outboundTags...)
-		}
+	templateOutbounds, ok := templateMap["outbounds"].([]any)
+	if !ok {
+		return nil, &ConfigurationError{"配置错误", fmt.Errorf("outbounds 字段缺失或类型错误")}
 	}
-	templateOutbounds = append(templateOutbounds, outboundsSlice...)
-	templateMap["outbounds"] = templateOutbounds
 
+	templateMap["outbounds"] = append(templateOutbounds, outboundsSlice...)
 	return templateMap, nil
 }
 
-// 生成默认配置并写入本地文件
-func DefaultConfig() error {
-	configMap, err := MergeConfig()
-	if err != nil {
-		return err
+func extractOutboundTags(outbounds []any) ([]any, error) {
+	tags := make([]any, 0, len(outbounds))
+	for _, ob := range outbounds {
+		outbound, ok := ob.(map[string]any)
+		if !ok {
+			return nil, &ConfigurationError{"配置错误", fmt.Errorf("无效的出站配置格式")}
+		}
+
+		tag, exists := outbound["tag"]
+		if !exists {
+			return nil, &ConfigurationError{"配置错误", fmt.Errorf("出站配置缺少 tag 字段")}
+		}
+		tags = append(tags, tag)
 	}
-	err = WriteCoreFile(configMap)
-	if err != nil {
-		return err
+	return tags, nil
+}
+
+func updateTemplateOutbounds(templateMap map[string]any, tags []any) error {
+	templateOutbounds, ok := templateMap["outbounds"].([]any)
+	if !ok {
+		return &ConfigurationError{"配置错误", fmt.Errorf("outbounds 字段缺失或类型错误")}
+	}
+
+	for i, item := range templateOutbounds {
+		outbound, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		t, ok := outbound["type"].(string)
+		if !ok {
+			continue
+		}
+
+		if t == "selector" || t == "urltest" {
+			existing, _ := outbound["outbounds"].([]any)
+			outbound["outbounds"] = append(existing, tags...)
+			templateOutbounds[i] = outbound
+		}
 	}
 	return nil
 }
 
-// 生成tun配置并写入本地文件
+func DefaultConfig() error {
+	return handleCoreConfig(false)
+}
+
 func TunConfig() error {
+	return handleCoreConfig(true)
+}
+
+func handleCoreConfig(tunMode bool) error {
 	configMap, err := MergeConfig()
 	if err != nil {
 		return err
 	}
 
-	inbounds, _ := configMap["inbounds"].([]any)
-	for i := range inbounds {
-		inbound := inbounds[i].(map[string]any)
-		if inbound["type"].(string) == "mixed" {
+	if tunMode {
+		if err := configureTunInbounds(configMap); err != nil {
+			return err
+		}
+	}
+
+	return WriteCoreFile(configMap)
+}
+
+func configureTunInbounds(configMap map[string]any) error {
+	inbounds, ok := configMap["inbounds"].([]any)
+	if !ok {
+		return &ConfigurationError{"配置错误", fmt.Errorf("inbounds 字段缺失或类型错误")}
+	}
+
+	for _, item := range inbounds {
+		inbound, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if inbound["type"] == "mixed" {
 			inbound["set_system_proxy"] = false
 		}
 	}
-	configMap["inbounds"] = inbounds
-	configMap["inbounds"] = append(configMap["inbounds"].([]any), U.Box.TunInbound)
 
-	err = WriteCoreFile(configMap)
-	if err != nil {
-		return err
+	if U.Box.TunInbound != nil {
+		configMap["inbounds"] = append(inbounds, U.Box.TunInbound)
 	}
-
 	return nil
 }
 
-// 检测模板是否改动
 func CompareTemplate() error {
 	data, err := ReadTemplate()
 	if err != nil {
 		return err
 	}
 
-	curr := crc32.ChecksumIEEE(data)
+	currentCRC := crc32.ChecksumIEEE(data)
 	if U.PrevCrc32 == 0 {
-		U.PrevCrc32 = curr
+		U.PrevCrc32 = currentCRC
 		return SwitchProxyMode(U.IsTun.Get())
 	}
 
-	if curr != U.PrevCrc32 {
-		U.PrevCrc32 = curr
+	if currentCRC != U.PrevCrc32 {
+		U.PrevCrc32 = currentCRC
 		return SwitchProxyMode(U.IsTun.Get())
 	}
 	return nil
 }
 
-// sing-box核心配置写入到本地
 func WriteCoreFile(data map[string]any) error {
 	config, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		return err
+		return &ConfigurationError{"序列化配置失败", err}
 	}
-	err = os.WriteFile(coreConfigPath, config, 0666)
-	if err != nil {
-		return err
+
+	if err := os.WriteFile("./resources/core/config.json", config, 0644); err != nil {
+		return &ConfigurationError{"写入配置文件失败", err}
 	}
 	return nil
 }
 
-// 读取未初始化的模板配置
 func ReadTemplate() ([]byte, error) {
-	data, err := os.ReadFile(templatePath)
+	data, err := os.ReadFile("./resources/template/template.json")
 	if err != nil {
-		return nil, err
+		return nil, &ConfigurationError{"读取模板文件失败", err}
 	}
 	return data, nil
 }
 
-// 获取激活订阅
 func GetActiveSub() (string, error) {
 	db := database.DBConn
 	var subscription models.Subscriptions
 	if err := db.Where("active = ?", true).First(&subscription).Error; err != nil {
-		return "", err
+		return "", &ConfigurationError{"获取激活订阅失败", err}
 	}
 	return subscription.Data, nil
 }
 
-// 合并初始化后的配置和出站配置（默认配置）
 func MergeConfig() (map[string]any, error) {
 	data, err := GetActiveSub()
 	if err != nil {
 		return nil, err
 	}
 
-	defaultConfig, err := InitConfig()
+	baseConfig, err := InitConfig()
 	if err != nil {
 		return nil, err
 	}
-	config, err := OutboundsConfig(defaultConfig, []byte(data))
-	if err != nil {
-		return nil, err
-	}
-	return config, nil
+
+	return OutboundsConfig(baseConfig, []byte(data))
 }
 
-// 切换代理模式
-func SwitchProxyMode(s bool) error {
-	if s {
+func SwitchProxyMode(tunMode bool) error {
+	if tunMode {
 		return TunConfig()
 	}
 	return DefaultConfig()
