@@ -22,7 +22,7 @@ func GetAllSubscriptions() ([]models.Subscriptions, error) {
 func CreateSubscription(subscribe *models.Subscriptions) error {
 	db := database.DBConn
 
-	res, err := P.Subscription(subscribe.Link, U.DefaultUserAgent)
+	res, err := P.Subscription(subscribe.Link, U.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,6 @@ func CreateSubscription(subscribe *models.Subscriptions) error {
 	db.Model(subscribe).Select("MAX(sort_order)").Scan(&maxSortOrder)
 	subscribe.UpdatedTime = time.Now()
 	subscribe.Data = res
-	subscribe.UserAgent = U.DefaultUserAgent
 	subscribe.SortOrder = maxSortOrder + 1
 	return db.Create(&subscribe).Error
 }
@@ -52,7 +51,6 @@ func EditSubscription(id string, updatedSubscribe *models.Subscriptions) error {
 	}
 	subscribe.Name = updatedSubscribe.Name
 	subscribe.Link = updatedSubscribe.Link
-	subscribe.UserAgent = updatedSubscribe.UserAgent
 	subscribe.AutoUpdate = updatedSubscribe.AutoUpdate
 	return db.Save(subscribe).Error
 }
@@ -83,7 +81,7 @@ func UpdateSubscription(id string) error {
 		return err
 	}
 
-	res, err := P.Subscription(subscribe.Link, subscribe.UserAgent)
+	res, err := P.Subscription(subscribe.Link, U.UserAgent)
 	if err != nil {
 		return err
 	}

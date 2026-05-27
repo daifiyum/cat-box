@@ -34,12 +34,18 @@ func Init() error {
 				Description: "更新间隔",
 			},
 			{
-				Label:       "user_agent_type",
-				Type:        "select",
-				Value:       "sing-box",
-				Options:     `["sing-box", "clash"]`,
-				Description: "默认User-Agent类型",
+				Label:       "custom_user_agent",
+				Type:        "text",
+				Value:       "clash-verge/v2.4.0",
+				Description: "自定义User-Agent",
 			},
+			// {
+			// 	Label: "user_agent_type",
+			// 	Type:  "select",
+			// 	Value: "sing-box",
+			// 	Options:     `["sing-box", "clash"]`,
+			// 	Description: "默认User-Agent类型",
+			// },
 		}
 		DBConn.Create(settings)
 	}
@@ -48,8 +54,8 @@ func Init() error {
 	if len(*settings) != 0 {
 		for _, setting := range *settings {
 			switch setting.Label {
-			case "user_agent_type":
-				U.DefaultUserAgent = setting.Value
+			case "custom_user_agent":
+				U.UserAgent = setting.Value
 			}
 		}
 	}

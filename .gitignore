@@ -4,3 +4,4 @@ resources/db/*
 !resources/core/.gitkeep
 !resources/db/.gitkeep
 build.ps1
+.idea

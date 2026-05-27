@@ -12,6 +12,7 @@ import (
 	"github.com/goccy/go-yaml"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/option"
+	"github.com/sagernet/sing/common/byteformats"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/format"
 	"github.com/sagernet/sing/common/json/badoption"
@@ -205,6 +206,37 @@ func ParseClashSubscription(_ context.Context, content string) ([]option.Outboun
 				Transport:      clashTransport(vlessOption.Network, vlessOption.HTTPOpts, vlessOption.HTTP2Opts, vlessOption.GrpcOpts, vlessOption.WSOpts),
 				PacketEncoding: vlessPacketEncoding(vlessOption.PacketEncoding),
 			}
+		case "anytls":
+			anytlsOption := &O.AnyTLSOption{}
+			err = decoder.Decode(proxyMapping, anytlsOption)
+			if err != nil {
+				return nil, err
+			}
+
+			outbound.Type = C.TypeAnyTLS
+			outbound.Options = &option.AnyTLSOutboundOptions{
+				ServerOptions: option.ServerOptions{
+					Server:     anytlsOption.Server,
+					ServerPort: uint16(anytlsOption.Port),
+				},
+
+				Password: anytlsOption.Password,
+
+				OutboundTLSOptionsContainer: option.OutboundTLSOptionsContainer{
+					TLS: &option.OutboundTLSOptions{
+						Enabled: true,
+
+						ServerName: anytlsOption.SNI,
+						Insecure:   anytlsOption.SkipCertVerify,
+						ALPN:       anytlsOption.ALPN,
+
+						UTLS: &option.OutboundUTLSOptions{
+							Enabled:     anytlsOption.ClientFingerprint != "",
+							Fingerprint: anytlsOption.ClientFingerprint,
+						},
+					},
+				},
+			}
 		}
 
 		// Filter unsupported protocols
@@ -331,13 +363,35 @@ func clashStringList(list []string) string {
 	return ""
 }
 
-func hyBandwidth(v string) string {
+// func hyBandwidth(v string) string {
+// 	for _, r := range v {
+// 		if unicode.IsLetter(r) {
+// 			return v
+// 		}
+// 	}
+// 	return v + " Mbps"
+// }
+
+func hyBandwidth(v string) *byteformats.NetworkBytesCompat {
+	hasUnit := false
 	for _, r := range v {
 		if unicode.IsLetter(r) {
-			return v
+			hasUnit = true
+			break
 		}
 	}
-	return v + " Mbps"
+
+	if !hasUnit {
+		v += " Mbps"
+	}
+
+	var bw byteformats.NetworkBytesCompat
+
+	if err := bw.UnmarshalJSON([]byte(`"` + v + `"`)); err != nil {
+		return nil
+	}
+
+	return &bw
 }
 
 func hy2Bandwidth(v string) int {

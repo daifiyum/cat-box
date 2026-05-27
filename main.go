@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/daifiyum/cat-box/api"
-	"github.com/daifiyum/cat-box/app"
+	A "github.com/daifiyum/cat-box/app"
 	"github.com/daifiyum/cat-box/app/tray"
 	"github.com/daifiyum/cat-box/database"
 	I "github.com/daifiyum/cat-box/initializer"
@@ -17,7 +17,7 @@ func init() {
 }
 
 func main() {
-	app := app.New("cat-box", "./resources/icons/box.ico")
+	app := A.New("cat-box", "./resources/icons/box.ico")
 
 	app.SetOnLeftClick(func() {
 		S.SwitchCore()
