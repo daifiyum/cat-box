@@ -10,9 +10,12 @@ type BoolState struct {
 
 func (v *BoolState) Set(newValue bool) {
 	v.mu.Lock()
-	defer v.mu.Unlock()
 	v.value = newValue
-	for _, listener := range v.listeners {
+	listeners := make([]func(bool), len(v.listeners))
+	copy(listeners, v.listeners)
+	v.mu.Unlock()
+
+	for _, listener := range listeners {
 		listener(newValue)
 	}
 }
