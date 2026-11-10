@@ -5,3 +5,4 @@ resources/db/*
 !resources/db/.gitkeep
 build.ps1
 .idea
+subscription/test/*

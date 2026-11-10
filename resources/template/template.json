@@ -1,11 +1,15 @@
 {
+  "$schema": "https://sing-box.sagernet.org/schema.json",
+
   "log": {
     "level": "info",
     "timestamp": false
   },
+
   "experimental": {
     "cache_file": {
       "enabled": true,
+      "cache_id": "",
       "path": "resources/db/cache.db"
     },
     "clash_api": {
@@ -14,24 +18,50 @@
       "external_ui": "resources/ui/clash"
     }
   },
+
+  "http_clients": [
+    {
+      "tag": "rule-set-client",
+      "detour": "auto",
+      "connect_timeout": "10s"
+    }
+  ],
+
   "dns": {
     "servers": [
       {
+        "type": "https",
         "tag": "remote",
-        "address": "https://1.1.1.1/dns-query",
-        "strategy": "prefer_ipv4",
+        "server": "1.1.1.1",
+        "server_port": 443,
+        "path": "/dns-query",
+        "tls": {
+          "server_name": "cloudflare-dns.com"
+        },
         "detour": "proxy"
       },
       {
+        "type": "https",
         "tag": "local",
-        "address": "https://223.6.6.6/dns-query",
-        "strategy": "prefer_ipv4",
-        "detour": "direct"
+        "server": "223.6.6.6",
+        "server_port": 443,
+        "path": "/dns-query",
+        "tls": {
+          "server_name": "dns.alidns.com"
+        }
       }
     ],
+
     "rules": [
       {
-        "outbound": "any",
+        "domain_suffix": [
+          "gpt.ge",
+          "iplaysoft.com",
+          "appinn.com",
+          "deepseek.com",
+          "hserver.icu",
+          "cloudstudio.net"
+        ],
         "action": "route",
         "server": "local"
       },
@@ -41,120 +71,162 @@
         "server": "local"
       }
     ],
-    "final": "remote"
+
+    "final": "remote",
+    "strategy": "prefer_ipv4",
+    "timeout": "5s"
   },
+
   "inbounds": [
     {
-      "tag": "mixed-in",
       "type": "mixed",
-      "listen": "::",
+      "tag": "mixed-in",
+      "listen": "0.0.0.0",
       "listen_port": 8888,
       "set_system_proxy": false
     },
     {
       "tag": "tun-in",
       "type": "tun",
-      "stack": "mixed",
-      "address": ["172.18.0.1/30", "fdfe:dcba:9876::1/126"],
-      "mtu": 9000,
+      "address": ["172.18.0.1/30"],
       "auto_route": true,
-      "strict_route": false
+      "strict_route": true
     }
   ],
+
   "outbounds": [
     {
       "tag": "proxy",
       "type": "selector",
-      "outbounds": ["auto", "direct"]
+      "outbounds": ["auto", "direct"],
+      "default": "auto"
     },
     {
       "tag": "openai",
       "type": "selector",
-      "outbounds": []
+      "outbounds": ["proxy"],
+      "default": "proxy"
     },
     {
       "tag": "auto",
       "type": "urltest",
       "outbounds": [],
-      "url": "http://1.1.1.1/generate_204",
-      "interval": "3m",
-      "tolerance": 50
+      "url": "https://www.gstatic.com/generate_204",
+      "interval": "5m",
+      "tolerance": 100
     },
     {
       "tag": "direct",
       "type": "direct"
     }
   ],
+
   "route": {
+    "auto_detect_interface": true,
+
+    "default_http_client": "rule-set-client",
+
+    "default_domain_resolver": {
+      "server": "local",
+      "strategy": "prefer_ipv4"
+    },
+
     "rules": [
       {
-        "inbound": "tun-in",
         "action": "sniff"
       },
+
       {
-        "protocol": "dns",
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "protocol": "dns"
+          },
+          {
+            "port": 53
+          }
+        ],
         "action": "hijack-dns"
       },
+
+      {
+        "network": "icmp",
+        "action": "route",
+        "outbound": "direct"
+      },
+
       {
         "protocol": "quic",
         "action": "reject",
         "method": "drop"
       },
-      {
-        "rule_set": "geosite-cn",
-        "action": "route",
-        "outbound": "direct"
-      },
-      {
-        "rule_set": "geoip-cn",
-        "action": "route",
-        "outbound": "direct"
-      },
+
       {
         "rule_set": "openai",
         "action": "route",
         "outbound": "openai"
       },
+
       {
         "ip_is_private": true,
         "action": "route",
         "outbound": "direct"
       },
+
       {
         "domain_suffix": [
           "gpt.ge",
           "iplaysoft.com",
           "appinn.com",
-          "deepseek.com"
+          "deepseek.com",
+          "hserver.icu",
+          "cloudstudio.net"
         ],
+        "action": "route",
+        "outbound": "direct"
+      },
+
+      {
+        "rule_set": "geosite-cn",
+        "action": "route",
+        "outbound": "direct"
+      },
+
+      {
+        "rule_set": "geoip-cn",
         "action": "route",
         "outbound": "direct"
       }
     ],
+
     "rule_set": [
       {
         "tag": "geoip-cn",
         "type": "remote",
         "format": "binary",
         "url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs",
-        "download_detour": "direct"
+        "http_client": "rule-set-client",
+        "update_interval": "1d"
       },
       {
         "tag": "geosite-cn",
         "type": "remote",
         "format": "binary",
         "url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs",
-        "download_detour": "direct"
+        "http_client": "rule-set-client",
+        "update_interval": "1d"
       },
       {
         "tag": "openai",
         "type": "remote",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/Toperlock/sing-box-geosite/main/rule/OpenAI.srs",
-        "download_detour": "proxy"
+        "http_client": "rule-set-client",
+        "update_interval": "1d"
       }
     ],
-    "auto_detect_interface": true,
+
     "final": "proxy"
   }
 }

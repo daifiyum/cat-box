@@ -2,8 +2,10 @@ package singbox
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 	"sync"
 	"syscall"
@@ -14,116 +16,102 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+type coreProcess struct {
+	cmd  *exec.Cmd
+	done chan struct{}
+}
+
 var (
-	cmd         *exec.Cmd
-	wg          sync.WaitGroup
+	core        *coreProcess
 	lifecycleMu sync.Mutex
 )
 
 func Start() error {
-	lifecycleMu.Lock()
-	defer lifecycleMu.Unlock()
-
-	if err := stopLocked(); err != nil {
-		return err
+	for {
+		if err := Stop(); err != nil {
+			return err
+		}
+		lifecycleMu.Lock()
+		if core == nil {
+			break
+		}
+		// Another Start acquired the lock first; stop its process before retrying.
+		lifecycleMu.Unlock()
 	}
-
+	defer lifecycleMu.Unlock()
 	if err := CompareTemplate(); err != nil {
 		return err
 	}
 
-	newCmd := exec.Command("./resources/core/sing-box.exe", "run", "-c", "./resources/core/config.json")
-	newCmd.SysProcAttr = &syscall.SysProcAttr{
+	cmd := exec.Command("./resources/core/sing-box.exe", "run", "-c", "./resources/core/config.json")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
 		CreationFlags: windows.CREATE_UNICODE_ENVIRONMENT | windows.CREATE_NEW_PROCESS_GROUP,
 		HideWindow:    true,
 	}
-
-	stderr, err := newCmd.StderrPipe()
+	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return err
 	}
-
-	if err = newCmd.Start(); err != nil {
-		log.Println("Core start failed:", err)
+	if err := cmd.Start(); err != nil {
 		return err
 	}
 
-	cmd = newCmd
+	process := &coreProcess{cmd: cmd, done: make(chan struct{})}
+	core = process
 	U.IsCoreRunning.Set(true)
-
-	wg.Add(2)
-	go scanStderr(stderr)
-	go waitProcess(newCmd)
-
+	go process.wait(stderr)
 	return nil
 }
 
-func scanStderr(stderrPipe io.ReadCloser) {
-	defer wg.Done()
-	scanner := bufio.NewScanner(stderrPipe)
+func (p *coreProcess) wait(stderr io.Reader) {
+	defer close(p.done)
+
+	// Finish reading before Wait closes the stderr pipe.
+	scanner := bufio.NewScanner(stderr)
 	for scanner.Scan() {
 		U.Broadcaster.Broadcast(scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println("Error scanning core stderr:", err)
+		// Keep draining after a scan error so the child cannot block on stderr.
+		_, _ = io.Copy(io.Discard, stderr)
 	}
-}
-
-func waitProcess(processCmd *exec.Cmd) {
-	if err := processCmd.Wait(); err != nil {
+	if err := p.cmd.Wait(); err != nil {
 		log.Println("Error waiting for the process to exit:", err)
 	}
 	U.IsCoreRunning.Set(false)
-	wg.Done()
-
-	lifecycleMu.Lock()
-	if cmd == processCmd {
-		cmd = nil
-	}
-	lifecycleMu.Unlock()
 }
 
 func Stop() error {
 	lifecycleMu.Lock()
 	defer lifecycleMu.Unlock()
-
-	return stopLocked()
-}
-
-func stopLocked() error {
-	if cmd == nil || cmd.Process == nil {
+	if core == nil {
 		return nil
 	}
-
-	processCmd := cmd
-	if U.IsCoreRunning.Get() {
-		if err := W.TerminateProc(processCmd.Process.Pid); err != nil {
-			log.Println("Error terminating process:", err)
-			if killErr := processCmd.Process.Kill(); killErr != nil {
-				return killErr
-			}
-		}
+	select {
+	case <-core.done:
+		core = nil
+		return nil
+	default:
 	}
 
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-	case <-time.After(5 * time.Second):
-		log.Println("Core stop timeout, killing process")
-		if err := processCmd.Process.Kill(); err != nil {
+	if err := W.TerminateProc(core.cmd.Process.Pid); err != nil {
+		log.Println("Error terminating process:", err)
+		if err := core.cmd.Process.Kill(); err != nil && !errors.Is(err, os.ErrProcessDone) {
 			return err
 		}
-		<-done
 	}
 
-	if cmd == processCmd {
-		cmd = nil
+	select {
+	case <-core.done:
+	case <-time.After(5 * time.Second):
+		log.Println("Core stop timeout, killing process")
+		if err := core.cmd.Process.Kill(); err != nil && !errors.Is(err, os.ErrProcessDone) {
+			return err
+		}
+		<-core.done
 	}
+	core = nil
 	return nil
 }
 

@@ -27,6 +27,7 @@ func httpGet(url, ua string, timeout time.Duration) (string, error) {
 	req.SetRequestURI(url)
 	req.Header.SetMethod("GET")
 	req.Header.Set("User-Agent", ua)
+	req.Header.Set("Accept", "*/*")
 
 	if err := client.DoTimeout(req, resp, timeout); err != nil {
 		return "", fmt.Errorf("request failed: %w", err)

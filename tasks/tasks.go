@@ -41,7 +41,7 @@ func updateSubscriptions() {
 	var isActive bool
 	for _, subscription := range subscriptions {
 		if subscription.AutoUpdate {
-			r, err := P.Subscription(subscription.Link, U.UserAgent)
+			r, err := P.Subscription(subscription.Link, U.UserAgent, subscription.Insecure)
 			if err != nil {
 				continue
 			}

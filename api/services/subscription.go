@@ -22,7 +22,7 @@ func GetAllSubscriptions() ([]models.Subscriptions, error) {
 func CreateSubscription(subscribe *models.Subscriptions) error {
 	db := database.DBConn
 
-	res, err := P.Subscription(subscribe.Link, U.UserAgent)
+	res, err := P.Subscription(subscribe.Link, U.UserAgent, subscribe.Insecure)
 	if err != nil {
 		return err
 	}
@@ -49,10 +49,26 @@ func EditSubscription(id string, updatedSubscribe *models.Subscriptions) error {
 	if err := db.First(subscribe, id).Error; err != nil {
 		return err
 	}
+	refresh := subscribe.Insecure != updatedSubscribe.Insecure
+	if refresh {
+		res, err := P.Subscription(updatedSubscribe.Link, U.UserAgent, updatedSubscribe.Insecure)
+		if err != nil {
+			return err
+		}
+		subscribe.Data = res
+		subscribe.UpdatedTime = time.Now()
+	}
 	subscribe.Name = updatedSubscribe.Name
 	subscribe.Link = updatedSubscribe.Link
 	subscribe.AutoUpdate = updatedSubscribe.AutoUpdate
-	return db.Save(subscribe).Error
+	subscribe.Insecure = updatedSubscribe.Insecure
+	if err := db.Save(subscribe).Error; err != nil {
+		return err
+	}
+	if refresh {
+		return reloadActiveSubscription(subscribe)
+	}
+	return nil
 }
 
 func ActivateSubscription(id string) error {
@@ -81,7 +97,7 @@ func UpdateSubscription(id string) error {
 		return err
 	}
 
-	res, err := P.Subscription(subscribe.Link, U.UserAgent)
+	res, err := P.Subscription(subscribe.Link, U.UserAgent, subscribe.Insecure)
 	if err != nil {
 		return err
 	}
@@ -92,6 +108,10 @@ func UpdateSubscription(id string) error {
 		return err
 	}
 
+	return reloadActiveSubscription(subscribe)
+}
+
+func reloadActiveSubscription(subscribe *models.Subscriptions) error {
 	if subscribe.Active {
 		err := S.SwitchProxyMode(U.IsTun.Get())
 		if err != nil {
